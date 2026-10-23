@@ -1,0 +1,2334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f4f5f8">
+  <title>Web Haptics: Semantic touch for the web</title>
+  <style>
+    :root {
+      --ink: #162033;
+      --muted: #617087;
+      --paper: #fffdf9;
+      --canvas: #eef1f6;
+      --line: #d9dee8;
+      --line-strong: #b8c1d1;
+      --accent: #5b57e8;
+      --accent-dark: #3f3bbd;
+      --accent-soft: #eeedff;
+      --accent-faint: #f7f6ff;
+      --positive: #1f8064;
+      --negative: #b34454;
+      --shadow: 0 1.4rem 4rem rgb(27 36 59 / 13%);
+      --radius: 1.4rem;
+      --pad: clamp(2rem, 4.1vw, 5rem);
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: Inter, "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: .2rem solid var(--accent);
+      outline-offset: .2rem;
+    }
+
+    .skip-link {
+      position: fixed;
+      z-index: 100;
+      top: .5rem;
+      left: .5rem;
+      padding: .6rem .9rem;
+      color: white;
+      background: var(--ink);
+      border-radius: .5rem;
+      transform: translateY(-160%);
+      transition: transform 160ms ease;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .deck-shell {
+      display: grid;
+      grid-template-rows: 3.7rem 1fr 2.2rem;
+      min-height: 100dvh;
+    }
+
+    .topbar,
+    .bottombar {
+      display: flex;
+      align-items: center;
+      width: min(96vw, 104rem);
+      margin: 0 auto;
+    }
+
+    .topbar {
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      color: var(--ink);
+      font-size: .82rem;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 1.4rem;
+      height: 1.4rem;
+      border: .18rem solid var(--accent);
+      border-radius: 50%;
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 50% auto auto 50%;
+      border: .1rem solid var(--accent);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .brand-mark::before {
+      width: 2rem;
+      height: 2rem;
+      opacity: .42;
+    }
+
+    .brand-mark::after {
+      width: .34rem;
+      height: .34rem;
+      background: var(--accent);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+
+    .control {
+      display: inline-grid;
+      place-items: center;
+      min-width: 2.35rem;
+      height: 2.35rem;
+      padding: 0 .7rem;
+      color: var(--ink);
+      background: rgb(255 255 255 / 68%);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .control:hover:not(:disabled) {
+      color: var(--accent-dark);
+      background: white;
+      border-color: var(--accent);
+    }
+
+    .control:disabled {
+      cursor: not-allowed;
+      opacity: .35;
+    }
+
+    .control svg {
+      width: 1.05rem;
+      height: 1.05rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+    }
+
+    .deck {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      width: min(94vw, calc((100dvh - 7rem) * 16 / 9));
+      aspect-ratio: 16 / 9;
+      padding: var(--pad);
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 85% 12%, rgb(91 87 232 / 6%), transparent 28%),
+        linear-gradient(135deg, rgb(255 255 255 / 75%), transparent 42%),
+        var(--paper);
+      border: 1px solid rgb(184 193 209 / 70%);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(4%) scale(.985);
+      transition: opacity 300ms var(--ease), transform 430ms var(--ease);
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      right: -7%;
+      bottom: -22%;
+      width: 36%;
+      aspect-ratio: 1;
+      border: 1px solid rgb(91 87 232 / 10%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .slide.is-active {
+      z-index: 2;
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0) scale(1);
+    }
+
+    .slide.was-active {
+      transform: translateX(-4%) scale(.985);
+    }
+
+    .slide-number {
+      position: absolute;
+      right: 2rem;
+      bottom: 1.35rem;
+      color: var(--muted);
+      font-size: clamp(.66rem, .78vw, .9rem);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .08em;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      margin: 0 0 .9rem;
+      color: var(--accent-dark);
+      font-size: clamp(.66rem, .78vw, .96rem);
+      font-weight: 780;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 2rem;
+      height: .16rem;
+      background: var(--accent);
+      border-radius: 1rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      text-wrap: balance;
+    }
+
+    h1 {
+      max-width: 11ch;
+      margin-bottom: 1rem;
+      font-size: clamp(3.2rem, 6.4vw, 7.1rem);
+      font-weight: 780;
+      letter-spacing: -.065em;
+      line-height: .92;
+    }
+
+    h2 {
+      max-width: 17ch;
+      margin-bottom: 1rem;
+      font-size: clamp(2.2rem, 4.25vw, 4.9rem);
+      font-weight: 760;
+      letter-spacing: -.052em;
+      line-height: .98;
+    }
+
+    h3 {
+      margin-bottom: .55rem;
+      font-size: clamp(1rem, 1.55vw, 1.8rem);
+      line-height: 1.12;
+    }
+
+    p {
+      color: var(--muted);
+      font-size: clamp(.82rem, 1.25vw, 1.45rem);
+      line-height: 1.45;
+    }
+
+    code,
+    pre {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    }
+
+    code {
+      color: var(--accent-dark);
+    }
+
+    .lede {
+      max-width: 34ch;
+      color: var(--ink);
+      font-size: clamp(1rem, 1.7vw, 2rem);
+      line-height: 1.35;
+    }
+
+    .small {
+      font-size: clamp(.68rem, .86vw, 1rem);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .accent {
+      color: var(--accent);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(1.4rem, 3vw, 3.5rem);
+      align-items: center;
+      height: 100%;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(.8rem, 1.7vw, 1.6rem);
+    }
+
+    .split-wide {
+      grid-template-columns: 1.05fr .95fr;
+    }
+
+    .panel {
+      padding: clamp(1rem, 1.75vw, 1.8rem);
+      background: rgb(255 255 255 / 76%);
+      border: 1px solid var(--line);
+      border-radius: 1.1rem;
+    }
+
+    .panel.accent-panel {
+      background: var(--accent-faint);
+      border-color: rgb(91 87 232 / 28%);
+    }
+
+    .metric {
+      display: flex;
+      gap: .8rem;
+      align-items: flex-start;
+    }
+
+    .metric + .metric {
+      margin-top: 1.2rem;
+    }
+
+    .metric-icon {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 2.45rem;
+      height: 2.45rem;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      border-radius: .8rem;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .metric p {
+      margin: .15rem 0 0;
+      font-size: clamp(.72rem, .95vw, 1.12rem);
+    }
+
+    .quote {
+      max-width: 16ch;
+      color: var(--ink);
+      font-size: clamp(1.5rem, 3vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -.035em;
+      line-height: 1.04;
+    }
+
+    .quote::before {
+      content: "\201C";
+      display: block;
+      height: .75em;
+      color: var(--accent);
+      font-size: 2em;
+    }
+
+    .code-card {
+      position: relative;
+      padding: 1.3rem 1.4rem;
+      overflow: hidden;
+      color: #e9ecf5;
+      background: #182238;
+      border: 1px solid #2b3854;
+      border-radius: 1rem;
+      box-shadow: 0 1rem 2.8rem rgb(22 32 51 / 18%);
+    }
+
+    .code-card::before {
+      content: "";
+      display: block;
+      width: .52rem;
+      height: .52rem;
+      margin-bottom: 1.15rem;
+      background: #ff6f7d;
+      border-radius: 50%;
+      box-shadow: .9rem 0 #ffca66, 1.8rem 0 #61d39b;
+    }
+
+    .code-card pre {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: clamp(.65rem, .96vw, 1.1rem);
+      line-height: 1.65;
+    }
+
+    .token-keyword {
+      color: #b4b1ff;
+    }
+
+    .token-string {
+      color: #80e0bd;
+    }
+
+    .token-number {
+      color: #ffce78;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 1.75rem;
+      padding: .25rem .65rem;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      border: 1px solid rgb(91 87 232 / 18%);
+      border-radius: 999px;
+      font-size: clamp(.6rem, .72vw, .86rem);
+      font-weight: 720;
+      letter-spacing: .04em;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+    }
+
+    .pulse-stage {
+      position: relative;
+      min-height: 15rem;
+    }
+
+    .pulse {
+      position: absolute;
+      width: 1rem;
+      height: 1rem;
+      border: .15rem solid var(--accent);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .pulse::before,
+    .pulse::after {
+      content: "";
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: 100%;
+      height: 100%;
+      border: .12rem solid var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .is-active .pulse::before {
+      animation: pulse-ring 2.3s var(--ease) infinite;
+    }
+
+    .is-active .pulse::after {
+      animation: pulse-ring 2.3s .45s var(--ease) infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        opacity: .72;
+        transform: translate(-50%, -50%) scale(.65);
+      }
+      72%,
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(6);
+      }
+    }
+
+    .hero-pulse {
+      position: absolute;
+      top: 49%;
+      right: 12%;
+      width: clamp(10rem, 23vw, 26rem);
+      aspect-ratio: 1;
+    }
+
+    .hero-pulse .ring {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      opacity: .12;
+      transform: translate(-50%, -50%);
+    }
+
+    .hero-pulse .ring:nth-child(1) {
+      width: 18%;
+      height: 18%;
+      background: var(--accent);
+      opacity: 1;
+    }
+
+    .hero-pulse .ring:nth-child(2) {
+      width: 42%;
+      height: 42%;
+    }
+
+    .hero-pulse .ring:nth-child(3) {
+      width: 68%;
+      height: 68%;
+    }
+
+    .hero-pulse .ring:nth-child(4) {
+      width: 96%;
+      height: 96%;
+    }
+
+    .is-active .hero-pulse .ring:not(:first-child) {
+      animation: hero-ring 2.7s var(--ease) infinite;
+    }
+
+    .is-active .hero-pulse .ring:nth-child(3) {
+      animation-delay: .25s;
+    }
+
+    .is-active .hero-pulse .ring:nth-child(4) {
+      animation-delay: .5s;
+    }
+
+    @keyframes hero-ring {
+      0%,
+      15% {
+        opacity: .08;
+        transform: translate(-50%, -50%) scale(.72);
+      }
+      48% {
+        opacity: .34;
+      }
+      85%,
+      100% {
+        opacity: .03;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .title-slide {
+      display: grid;
+      align-content: center;
+    }
+
+    .title-slide .subtitle {
+      max-width: 25ch;
+      margin-bottom: 2rem;
+      font-size: clamp(1rem, 1.45vw, 1.75rem);
+    }
+
+    .speaker {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      color: var(--ink);
+      font-size: clamp(.72rem, .88vw, 1rem);
+      font-weight: 700;
+    }
+
+    .speaker-dot {
+      width: .55rem;
+      height: .55rem;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .phone-scene {
+      position: relative;
+      width: min(100%, 27rem);
+      margin: auto;
+      aspect-ratio: 1.05;
+    }
+
+    .phone {
+      position: absolute;
+      inset: 4% 25% 3%;
+      padding: 7% 5%;
+      background: #fbfcff;
+      border: .55rem solid var(--ink);
+      border-radius: 2.4rem;
+      box-shadow: 0 1.6rem 3rem rgb(22 32 51 / 16%);
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: .5rem;
+      left: 50%;
+      width: 28%;
+      height: .42rem;
+      background: var(--ink);
+      border-radius: 999px;
+      transform: translateX(-50%);
+    }
+
+    .phone-screen {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      height: 100%;
+      padding: .8rem;
+      background: linear-gradient(160deg, #f2f4f9, #fff);
+      border-radius: 1.5rem;
+    }
+
+    .phone-bubble {
+      align-self: center;
+      justify-self: center;
+      width: 70%;
+      height: 20%;
+      background: var(--accent-soft);
+      border: 1px solid rgb(91 87 232 / 18%);
+      border-radius: 1rem;
+    }
+
+    .phone-keys {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: .22rem;
+    }
+
+    .phone-key {
+      aspect-ratio: 1;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: .26rem;
+    }
+
+    .phone-key:nth-child(10) {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .phone-pulse {
+      top: 79%;
+      left: 50%;
+    }
+
+    .example-card {
+      position: absolute;
+      min-width: 8.5rem;
+      padding: .75rem .9rem;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: .8rem;
+      box-shadow: 0 .7rem 1.8rem rgb(22 32 51 / 9%);
+    }
+
+    .example-card strong {
+      display: block;
+      margin-bottom: .18rem;
+      font-size: clamp(.68rem, .92vw, 1rem);
+    }
+
+    .example-card span {
+      color: var(--muted);
+      font-size: clamp(.56rem, .7vw, .8rem);
+    }
+
+    .example-card.one {
+      top: 8%;
+      left: 0;
+    }
+
+    .example-card.two {
+      top: 38%;
+      right: 0;
+    }
+
+    .example-card.three {
+      bottom: 5%;
+      left: 2%;
+    }
+
+    .device-landscape {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .8rem;
+      align-items: end;
+      min-height: 17rem;
+      padding-top: 1rem;
+    }
+
+    .device {
+      position: relative;
+      display: grid;
+      align-content: end;
+      justify-items: center;
+      min-height: 13rem;
+      padding: 1.1rem .5rem .8rem;
+      background: linear-gradient(to top, rgb(91 87 232 / 5%), transparent 70%);
+      border-bottom: 2px solid var(--line);
+    }
+
+    .device svg {
+      width: 80%;
+      max-height: 8rem;
+      overflow: visible;
+      fill: none;
+      stroke: var(--ink);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+    }
+
+    .device .device-accent {
+      fill: var(--accent-soft);
+      stroke: var(--accent);
+    }
+
+    .device strong {
+      margin-top: 1rem;
+      font-size: clamp(.65rem, .85vw, 1rem);
+    }
+
+    .device small {
+      margin-top: .2rem;
+      color: var(--muted);
+      font-size: clamp(.54rem, .68vw, .75rem);
+      text-align: center;
+    }
+
+    .is-active .device {
+      animation: device-rise 650ms var(--ease) both;
+    }
+
+    .is-active .device:nth-child(2) {
+      animation-delay: 100ms;
+    }
+
+    .is-active .device:nth-child(3) {
+      animation-delay: 200ms;
+    }
+
+    .is-active .device:nth-child(4) {
+      animation-delay: 300ms;
+    }
+
+    @keyframes device-rise {
+      from {
+        opacity: 0;
+        transform: translateY(1.4rem);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      min-height: 4.5rem;
+      padding: .7rem 1rem;
+      background: var(--accent-faint);
+      border: 1px solid rgb(91 87 232 / 18%);
+      border-radius: .8rem;
+    }
+
+    .waveform span {
+      width: .45rem;
+      height: 1rem;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .waveform span:nth-child(2),
+    .waveform span:nth-child(8) {
+      height: 2.1rem;
+    }
+
+    .waveform span:nth-child(3),
+    .waveform span:nth-child(7) {
+      height: 3.2rem;
+    }
+
+    .waveform span:nth-child(4),
+    .waveform span:nth-child(6) {
+      height: 4rem;
+    }
+
+    .waveform span:nth-child(5) {
+      height: 2.7rem;
+    }
+
+    .x-list {
+      display: grid;
+      gap: .75rem;
+      margin: 1rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .x-list li {
+      display: flex;
+      gap: .55rem;
+      align-items: flex-start;
+      color: var(--muted);
+      font-size: clamp(.68rem, .9vw, 1.08rem);
+    }
+
+    .x-list li::before {
+      content: "\00d7";
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 1.35rem;
+      height: 1.35rem;
+      color: var(--negative);
+      background: #fff0f2;
+      border-radius: 50%;
+      font-weight: 900;
+    }
+
+    .semantic-flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: .7rem;
+      align-items: center;
+      margin-top: 1.4rem;
+    }
+
+    .flow-node {
+      display: grid;
+      place-items: center;
+      min-height: 5.7rem;
+      padding: .8rem;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: .9rem;
+      text-align: center;
+    }
+
+    .flow-node strong {
+      font-size: clamp(.72rem, .9vw, 1.05rem);
+    }
+
+    .flow-node span {
+      margin-top: .2rem;
+      color: var(--muted);
+      font-size: clamp(.58rem, .68vw, .8rem);
+    }
+
+    .flow-node.intent {
+      color: white;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .flow-node.intent span {
+      color: rgb(255 255 255 / 78%);
+    }
+
+    .flow-arrow {
+      color: var(--accent);
+      font-size: clamp(1.2rem, 1.8vw, 2rem);
+    }
+
+    .vocab-table {
+      width: 100%;
+      overflow: hidden;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+    }
+
+    .vocab-table th,
+    .vocab-table td {
+      padding: clamp(.75rem, 1.25vw, 1.25rem);
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .vocab-table tr:last-child th,
+    .vocab-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .vocab-table th {
+      width: 28%;
+      color: var(--ink);
+      background: #f8f9fc;
+      font-size: clamp(.66rem, .88vw, 1rem);
+    }
+
+    .vocab-table td {
+      font-size: clamp(.66rem, .88vw, 1rem);
+    }
+
+    .effect-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      margin-bottom: .45rem;
+    }
+
+    .effect-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .32rem .62rem;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      border-radius: .45rem;
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: .86em;
+      font-weight: 700;
+    }
+
+    .effect-chip.process {
+      color: #7e3744;
+      background: #fff0f2;
+    }
+
+    .api-signature {
+      margin: 1.2rem 0;
+      color: var(--ink);
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: clamp(1rem, 1.8vw, 2.1rem);
+      font-weight: 670;
+      letter-spacing: -.03em;
+    }
+
+    .api-signature .method {
+      color: var(--accent);
+    }
+
+    .logic-map {
+      position: relative;
+      min-height: 17rem;
+      padding: 1rem;
+      overflow: hidden;
+      background:
+        linear-gradient(rgb(22 32 51 / 5%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(22 32 51 / 5%) 1px, transparent 1px),
+        #fbfcff;
+      background-size: 1.6rem 1.6rem;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+    }
+
+    .logic-map .guide {
+      position: absolute;
+      top: 12%;
+      bottom: 12%;
+      left: 62%;
+      border-left: 2px dashed var(--accent);
+    }
+
+    .logic-map .object {
+      position: absolute;
+      top: 38%;
+      left: 20%;
+      width: 18%;
+      aspect-ratio: 1;
+      background: white;
+      border: 2px solid var(--ink);
+      border-radius: .75rem;
+      box-shadow: 0 .5rem 1.2rem rgb(22 32 51 / 10%);
+    }
+
+    .logic-map .object::after {
+      content: "";
+      position: absolute;
+      inset: 28%;
+      border: 2px solid var(--accent);
+      border-radius: .25rem;
+    }
+
+    .logic-map .label {
+      position: absolute;
+      right: 5%;
+      bottom: 8%;
+      color: var(--accent-dark);
+      font-size: clamp(.58rem, .75vw, .85rem);
+      font-weight: 750;
+    }
+
+    .is-active .logic-map .object {
+      animation: logic-align 4.8s var(--ease) infinite;
+    }
+
+    @keyframes logic-align {
+      0%,
+      12% {
+        left: 12%;
+      }
+      45%,
+      65% {
+        left: 53%;
+      }
+      88%,
+      100% {
+        left: 12%;
+      }
+    }
+
+    .css-choice {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .choice-card {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 16.5rem;
+      padding: 1.25rem;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+    }
+
+    .choice-card.primary {
+      background: var(--accent-faint);
+      border-color: rgb(91 87 232 / 28%);
+    }
+
+    .choice-card p {
+      font-size: clamp(.64rem, .86vw, 1rem);
+    }
+
+    .choice-card .code-card {
+      align-self: end;
+      padding: .9rem 1rem;
+      box-shadow: none;
+    }
+
+    .choice-card .code-card::before {
+      margin-bottom: .7rem;
+    }
+
+    .versus {
+      align-self: center;
+      color: var(--accent);
+      font-size: clamp(.72rem, .9vw, 1rem);
+      font-weight: 850;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .decision-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .65rem;
+      margin-top: 1rem;
+    }
+
+    .decision-item {
+      padding: .7rem .8rem;
+      color: var(--muted);
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: .7rem;
+      font-size: clamp(.54rem, .69vw, .8rem);
+      line-height: 1.35;
+    }
+
+    .decision-item strong {
+      display: block;
+      margin-bottom: .15rem;
+      color: var(--ink);
+    }
+
+    .demo-layout {
+      display: grid;
+      grid-template-columns: .78fr 1.22fr;
+      gap: clamp(1.2rem, 2.6vw, 3rem);
+      align-items: center;
+      height: 100%;
+    }
+
+    .demo-stage {
+      position: relative;
+      min-height: 24rem;
+      overflow: hidden;
+      background:
+        linear-gradient(rgb(22 32 51 / 5%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(22 32 51 / 5%) 1px, transparent 1px),
+        #fafbfe;
+      background-size: 2rem 2rem;
+      border: 1px solid var(--line);
+      border-radius: 1.1rem;
+    }
+
+    .alignment-stage .v-guide,
+    .alignment-stage .h-guide {
+      position: absolute;
+      opacity: .18;
+    }
+
+    .alignment-stage .v-guide {
+      top: 8%;
+      bottom: 8%;
+      left: 50%;
+      border-left: 2px solid var(--accent);
+    }
+
+    .alignment-stage .h-guide {
+      top: 50%;
+      right: 8%;
+      left: 8%;
+      border-top: 2px solid var(--accent);
+    }
+
+    .alignment-stage .snap-label {
+      position: absolute;
+      top: 6%;
+      left: 52%;
+      color: var(--accent-dark);
+      font-size: clamp(.58rem, .73vw, .84rem);
+      font-weight: 740;
+    }
+
+    .drag-object {
+      position: absolute;
+      top: calc(50% - 3.1rem);
+      left: 8%;
+      display: grid;
+      place-items: center;
+      width: 6.2rem;
+      height: 6.2rem;
+      color: var(--accent-dark);
+      background: white;
+      border: 2px solid var(--ink);
+      border-radius: 1rem;
+      box-shadow: 0 1rem 2rem rgb(22 32 51 / 15%);
+      font-size: .75rem;
+      font-weight: 750;
+    }
+
+    .alignment-pulse {
+      top: 50%;
+      left: 50%;
+      opacity: 0;
+    }
+
+    .alignment-stage.run .drag-object,
+    .is-active .alignment-stage .drag-object {
+      animation: drag-to-guide 5.2s var(--ease) infinite;
+    }
+
+    .alignment-stage.run .alignment-pulse,
+    .is-active .alignment-stage .alignment-pulse {
+      animation: reveal-pulse 5.2s var(--ease) infinite;
+    }
+
+    @keyframes drag-to-guide {
+      0%,
+      12% {
+        left: 8%;
+        transform: rotate(-3deg);
+      }
+      44%,
+      68% {
+        left: calc(50% - 3.1rem);
+        transform: rotate(0);
+      }
+      88%,
+      100% {
+        left: 8%;
+        transform: rotate(-3deg);
+      }
+    }
+
+    @keyframes reveal-pulse {
+      0%,
+      42%,
+      70%,
+      100% {
+        opacity: 0;
+      }
+      45%,
+      64% {
+        opacity: 1;
+      }
+    }
+
+    .demo-button {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      min-height: 2.5rem;
+      margin-top: 1rem;
+      padding: .55rem .9rem;
+      color: white;
+      background: var(--accent);
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: clamp(.65rem, .78vw, .9rem);
+      font-weight: 750;
+      box-shadow: 0 .5rem 1.2rem rgb(91 87 232 / 24%);
+    }
+
+    .demo-button:hover {
+      background: var(--accent-dark);
+    }
+
+    .demo-button svg {
+      width: .9rem;
+      height: .9rem;
+      fill: currentColor;
+    }
+
+    .carousel-stage {
+      display: grid;
+      align-content: center;
+      min-height: 24rem;
+      background: #f5f7fb;
+    }
+
+    .carousel-window {
+      position: relative;
+      width: 78%;
+      margin: auto;
+      overflow: hidden;
+      border: .65rem solid white;
+      border-radius: 1.25rem;
+      box-shadow: 0 1rem 2.6rem rgb(22 32 51 / 14%);
+    }
+
+    .carousel-track {
+      display: flex;
+      width: 300%;
+    }
+
+    .carousel-card {
+      position: relative;
+      flex: 0 0 33.333%;
+      aspect-ratio: 1.55;
+      overflow: hidden;
+      background: linear-gradient(145deg, #cfd8f6, #eef1ff);
+    }
+
+    .carousel-card:nth-child(2) {
+      background: linear-gradient(145deg, #d8eadc, #f2f7ed);
+    }
+
+    .carousel-card:nth-child(3) {
+      background: linear-gradient(145deg, #f6dccf, #fff2e8);
+    }
+
+    .carousel-card::before {
+      content: "";
+      position: absolute;
+      right: -8%;
+      bottom: -36%;
+      width: 78%;
+      aspect-ratio: 1;
+      background: rgb(255 255 255 / 60%);
+      border-radius: 50%;
+    }
+
+    .carousel-card::after {
+      content: "";
+      position: absolute;
+      top: 19%;
+      left: 16%;
+      width: 19%;
+      aspect-ratio: 1;
+      background: rgb(255 255 255 / 72%);
+      border-radius: 50%;
+      box-shadow: 7rem 2rem 0 1rem rgb(91 87 232 / 12%);
+    }
+
+    .carousel-pulse {
+      top: 78%;
+      left: 50%;
+      opacity: 0;
+    }
+
+    .carousel-stage.run .carousel-track,
+    .is-active .carousel-stage .carousel-track {
+      animation: carousel-snap 7s var(--ease) infinite;
+    }
+
+    .carousel-stage.run .carousel-pulse,
+    .is-active .carousel-stage .carousel-pulse {
+      animation: carousel-pulse 7s var(--ease) infinite;
+    }
+
+    @keyframes carousel-snap {
+      0%,
+      18% {
+        transform: translateX(0);
+      }
+      32%,
+      52% {
+        transform: translateX(-33.333%);
+      }
+      66%,
+      86% {
+        transform: translateX(-66.666%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes carousel-pulse {
+      0%,
+      28%,
+      36%,
+      62%,
+      70%,
+      96%,
+      100% {
+        opacity: 0;
+      }
+      30%,
+      34%,
+      64%,
+      68%,
+      98% {
+        opacity: 1;
+      }
+    }
+
+    .safety-grid {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 1rem;
+      margin-top: 1.1rem;
+    }
+
+    .safety-column {
+      padding: 1.1rem;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+    }
+
+    .safety-column.ua {
+      background: var(--accent-faint);
+      border-color: rgb(91 87 232 / 24%);
+    }
+
+    .safety-column h3 {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: clamp(.8rem, 1.05vw, 1.2rem);
+    }
+
+    .safety-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .65rem;
+      margin: .9rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .safety-list li {
+      min-height: 4.2rem;
+      padding: .72rem;
+      color: var(--muted);
+      background: #fafbfe;
+      border: 1px solid var(--line);
+      border-radius: .7rem;
+      font-size: clamp(.56rem, .72vw, .84rem);
+      line-height: 1.35;
+    }
+
+    .safety-list strong {
+      display: block;
+      margin-bottom: .18rem;
+      color: var(--ink);
+    }
+
+    .status-track {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .status-track::before {
+      content: "";
+      position: absolute;
+      top: 1.3rem;
+      right: 13%;
+      left: 13%;
+      height: .14rem;
+      background: linear-gradient(90deg, var(--accent), var(--accent) 48%, var(--line) 48%);
+    }
+
+    .status-step {
+      position: relative;
+      padding-top: 3.2rem;
+      text-align: center;
+    }
+
+    .status-dot {
+      position: absolute;
+      z-index: 1;
+      top: .62rem;
+      left: 50%;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: white;
+      border: .3rem solid var(--line-strong);
+      border-radius: 50%;
+      transform: translateX(-50%);
+    }
+
+    .status-step.done .status-dot,
+    .status-step.current .status-dot {
+      border-color: var(--accent);
+    }
+
+    .status-step.current .status-dot {
+      box-shadow: 0 0 0 .45rem var(--accent-soft);
+    }
+
+    .status-step h3 {
+      font-size: clamp(.75rem, 1vw, 1.15rem);
+    }
+
+    .status-step p {
+      max-width: 24ch;
+      margin-right: auto;
+      margin-left: auto;
+      font-size: clamp(.58rem, .75vw, .86rem);
+    }
+
+    .status-lanes {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 1.2rem;
+    }
+
+    .status-lane {
+      padding: 1rem 1.15rem;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: .85rem;
+    }
+
+    .status-lane strong {
+      display: block;
+      margin-bottom: .25rem;
+      font-size: clamp(.68rem, .9vw, 1.05rem);
+    }
+
+    .status-lane span {
+      color: var(--muted);
+      font-size: clamp(.56rem, .72vw, .84rem);
+    }
+
+    .cta-grid {
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+      gap: 1rem;
+      align-items: stretch;
+      margin-top: 1.4rem;
+    }
+
+    .link-card {
+      display: grid;
+      align-content: center;
+      min-height: 8rem;
+      padding: 1.15rem 1.3rem;
+      color: var(--ink);
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      text-decoration: none;
+      transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .link-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 .7rem 1.8rem rgb(22 32 51 / 10%);
+      transform: translateY(-.15rem);
+    }
+
+    .link-card.primary {
+      color: white;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .link-card small {
+      margin-bottom: .45rem;
+      color: inherit;
+      font-size: clamp(.58rem, .7vw, .8rem);
+      font-weight: 750;
+      letter-spacing: .08em;
+      opacity: .74;
+      text-transform: uppercase;
+    }
+
+    .link-card strong {
+      font-size: clamp(.82rem, 1.18vw, 1.35rem);
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .closing-line {
+      margin-top: 1.3rem;
+      color: var(--ink);
+      font-size: clamp(1rem, 1.7vw, 1.9rem);
+      font-weight: 720;
+    }
+
+    .bottombar {
+      gap: 1rem;
+    }
+
+    .progress-wrap {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      gap: .7rem;
+    }
+
+    progress {
+      width: 100%;
+      height: .22rem;
+      overflow: hidden;
+      appearance: none;
+      background: var(--line);
+      border: 0;
+      border-radius: 1rem;
+    }
+
+    progress::-webkit-progress-bar {
+      background: var(--line);
+    }
+
+    progress::-webkit-progress-value {
+      background: var(--accent);
+      transition: width 250ms var(--ease);
+    }
+
+    progress::-moz-progress-bar {
+      background: var(--accent);
+    }
+
+    .counter {
+      min-width: 4.3rem;
+      color: var(--muted);
+      font-size: .76rem;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .key-hint {
+      color: var(--muted);
+      font-size: .7rem;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(.8rem);
+    }
+
+    .is-active .reveal {
+      animation: reveal 520ms var(--ease) forwards;
+    }
+
+    .is-active .reveal.delay-1 {
+      animation-delay: 100ms;
+    }
+
+    .is-active .reveal.delay-2 {
+      animation-delay: 200ms;
+    }
+
+    .is-active .reveal.delay-3 {
+      animation-delay: 300ms;
+    }
+
+    .is-active .reveal.delay-4 {
+      animation-delay: 400ms;
+    }
+
+    @keyframes reveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    body.motion-paused *,
+    body.motion-paused *::before,
+    body.motion-paused *::after {
+      animation-play-state: paused !important;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 760px), (max-height: 520px) {
+      .deck-shell {
+        grid-template-rows: 3.1rem 1fr 1.8rem;
+      }
+
+      .topbar {
+        width: 94vw;
+      }
+
+      .brand span:last-child {
+        display: none;
+      }
+
+      .control {
+        min-width: 2rem;
+        height: 2rem;
+      }
+
+      .slide {
+        width: min(96vw, calc((100dvh - 5.6rem) * 16 / 9));
+      }
+
+      .key-hint {
+        display: none;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .slide {
+        --pad: 2rem;
+      }
+
+      .slide h2 {
+        margin-bottom: .65rem;
+        font-size: clamp(2rem, 3.6vw, 3rem);
+      }
+
+      .css-choice {
+        gap: .65rem;
+      }
+
+      .choice-card {
+        min-height: 13rem;
+        padding: .85rem;
+      }
+
+      .choice-card p {
+        margin-bottom: .45rem;
+      }
+
+      .choice-card .code-card {
+        padding: .7rem .8rem;
+      }
+
+      .choice-card .code-card::before {
+        margin-bottom: .4rem;
+      }
+
+      .decision-strip {
+        gap: .4rem;
+        margin-top: .5rem;
+      }
+
+      .decision-item {
+        padding: .5rem .6rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+      }
+    }
+
+    @media print {
+      @page {
+        size: 13.333in 7.5in;
+        margin: 0;
+      }
+
+      html,
+      body {
+        background: white;
+      }
+
+      body {
+        overflow: visible;
+      }
+
+      .deck-shell {
+        display: block;
+      }
+
+      .topbar,
+      .bottombar,
+      .skip-link,
+      .demo-button {
+        display: none !important;
+      }
+
+      .deck {
+        display: block;
+        overflow: visible;
+      }
+
+      .slide,
+      .slide.is-active,
+      .slide.was-active {
+        position: relative;
+        display: block;
+        width: 13.333in;
+        height: 7.5in;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        opacity: 1;
+        page-break-after: always;
+        pointer-events: auto;
+        transform: none;
+      }
+
+      .slide:last-child {
+        page-break-after: auto;
+      }
+
+      .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#deck">Skip to slides</a>
+  <div class="deck-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Web Haptics / TPAC 2027</span>
+      </div>
+      <nav class="controls" aria-label="Presentation controls">
+        <button class="control" id="prev" type="button" aria-label="Previous slide">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button class="control" id="next" type="button" aria-label="Next slide">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <button class="control" id="pause" type="button" aria-label="Pause animations" aria-pressed="false">
+          <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
+        </button>
+        <button class="control" id="fullscreen" type="button" aria-label="Enter fullscreen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg>
+        </button>
+      </nav>
+    </header>
+
+    <main class="deck" id="deck" tabindex="-1">
+      <section class="slide title-slide is-active" id="slide-1" data-title="Web Haptics" aria-roledescription="slide" aria-label="Slide 1 of 13: Web Haptics">
+        <p class="eyebrow reveal">TPAC 2027 / Devices and Sensors WG</p>
+        <h1 class="reveal delay-1">Web Haptics</h1>
+        <p class="subtitle reveal delay-2">Semantic touch for the web, from interaction intent to native feedback.</p>
+        <div class="speaker reveal delay-3"><span class="speaker-dot"></span>Alexander Kyereboah</div>
+        <div class="hero-pulse" aria-hidden="true">
+          <span class="ring"></span>
+          <span class="ring"></span>
+          <span class="ring"></span>
+          <span class="ring"></span>
+        </div>
+        <span class="slide-number">01</span>
+      </section>
+
+      <section class="slide" id="slide-2" data-title="What haptics feels like" aria-roledescription="slide" aria-label="Slide 2 of 13: What haptics already feels like">
+        <div class="grid-2 split-wide">
+          <div>
+            <p class="eyebrow reveal">A familiar language</p>
+            <h2 class="reveal delay-1">You already know what haptics feels like.</h2>
+            <p class="lede reveal delay-2">A tap under a key. A tick through a picker. A confirmation when an action completes.</p>
+            <p class="reveal delay-3">The best haptics are brief, contextual, and almost invisible. They make digital interactions feel physical.</p>
+          </div>
+          <div class="phone-scene reveal delay-2" aria-label="Phone showing common haptic moments">
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="phone-bubble"></div>
+                <div class="phone-keys" aria-hidden="true">
+                  <span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span>
+                  <span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span><span class="phone-key"></span>
+                </div>
+              </div>
+              <span class="pulse phone-pulse" aria-hidden="true"></span>
+            </div>
+            <div class="example-card one"><strong>Keyboard</strong><span>Light confirmation</span></div>
+            <div class="example-card two"><strong>Picker</strong><span>Discrete ticks</span></div>
+            <div class="example-card three"><strong>Long press</strong><span>Threshold crossed</span></div>
+          </div>
+        </div>
+        <span class="slide-number">02</span>
+      </section>
+
+      <section class="slide" id="slide-3" data-title="The landscape is changing" aria-roledescription="slide" aria-label="Slide 3 of 13: The landscape is changing">
+        <p class="eyebrow reveal">Beyond the phone</p>
+        <h2 class="reveal delay-1">The haptic landscape is expanding.</h2>
+        <p class="reveal delay-2">Native platforms now expose semantic feedback across more input devices, with richer effects tuned to each form factor.</p>
+        <div class="device-landscape" aria-label="Haptic devices: phone, touchpad, mouse, and pen">
+          <div class="device">
+            <svg viewBox="0 0 100 120" aria-hidden="true">
+              <rect class="device-accent" x="25" y="6" width="50" height="105" rx="10"/>
+              <path d="M42 13h16M44 102h12"/>
+              <circle cx="50" cy="57" r="7"/>
+              <circle cx="50" cy="57" r="16" opacity=".35"/>
+            </svg>
+            <strong>Phone</strong><small>Impact, selection, notification</small>
+          </div>
+          <div class="device">
+            <svg viewBox="0 0 140 100" aria-hidden="true">
+              <path class="device-accent" d="M24 8h92a8 8 0 0 1 8 8v52H16V16a8 8 0 0 1 8-8Z"/>
+              <path d="M6 68h128l-10 20H16Z"/>
+              <rect x="49" y="47" width="42" height="25" rx="4"/>
+              <circle cx="70" cy="59" r="5"/>
+              <circle cx="70" cy="59" r="12" opacity=".35"/>
+            </svg>
+            <strong>Touchpad</strong><small>Clicks, alignment, boundaries</small>
+          </div>
+          <div class="device">
+            <svg viewBox="0 0 100 120" aria-hidden="true">
+              <path class="device-accent" d="M50 7c25 0 36 20 36 50v22c0 22-14 34-36 34S14 101 14 79V57C14 27 25 7 50 7Z"/>
+              <path d="M50 8v35M35 43h30"/>
+              <circle cx="50" cy="65" r="6"/>
+              <circle cx="50" cy="65" r="14" opacity=".35"/>
+            </svg>
+            <strong>Mouse</strong><small>Hover, steps, collisions</small>
+          </div>
+          <div class="device">
+            <svg viewBox="0 0 100 120" aria-hidden="true">
+              <path class="device-accent" d="m26 104 7-24L72 8l10 6-39 72Z"/>
+              <path d="m33 80 10 6M37 90l-11 14 17-18"/>
+              <circle cx="58" cy="46" r="5"/>
+              <circle cx="58" cy="46" r="13" opacity=".35"/>
+            </svg>
+            <strong>Pen</strong><small>Drawing, snapping, contact</small>
+          </div>
+        </div>
+        <span class="slide-number">03</span>
+      </section>
+
+      <section class="slide" id="slide-4" data-title="Why vibrate is not enough" aria-roledescription="slide" aria-label="Slide 4 of 13: Why navigator vibrate is not enough">
+        <div class="grid-2">
+          <div>
+            <p class="eyebrow reveal">What the web has today</p>
+            <h2 class="reveal delay-1"><code>navigator.vibrate()</code> says how, not why.</h2>
+            <div class="code-card reveal delay-2">
+              <pre>navigator.vibrate([
+  <span class="token-number">100</span>, <span class="token-number">50</span>, <span class="token-number">200</span>
+]);</pre>
+            </div>
+          </div>
+          <div>
+            <div class="waveform reveal" aria-label="Raw vibration waveform">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <ul class="x-list">
+              <li class="reveal delay-1">Raw duration patterns are hard to map across hardware.</li>
+              <li class="reveal delay-2">The model is phone-first and effectively single-engine.</li>
+              <li class="reveal delay-3">The browser cannot adapt a waveform to native semantic effects.</li>
+            </ul>
+            <p class="quote reveal delay-4">The target is no longer “make my phone shake.”</p>
+          </div>
+        </div>
+        <span class="slide-number">04</span>
+      </section>
+
+      <section class="slide" id="slide-5" data-title="Semantic haptics" aria-roledescription="slide" aria-label="Slide 5 of 13: Semantic haptics and effect vocabulary">
+        <p class="eyebrow reveal">Enter Web Haptics</p>
+        <div class="grid-2 split-wide">
+          <div>
+            <h2 class="reveal delay-1">Declare intent. Let the platform shape the feel.</h2>
+            <div class="semantic-flow reveal delay-2" aria-label="Interaction intent mapped by the browser to native hardware">
+              <div class="flow-node"><strong>Interaction</strong><span>Object aligns</span></div>
+              <span class="flow-arrow" aria-hidden="true">&rarr;</span>
+              <div class="flow-node intent"><strong>Intent</strong><span><code>align</code></span></div>
+              <span class="flow-arrow" aria-hidden="true">&rarr;</span>
+              <div class="flow-node"><strong>Native effect</strong><span>Per device and OS</span></div>
+            </div>
+            <div class="tags reveal delay-3">
+              <span class="tag">Semantic</span>
+              <span class="tag">Cross-platform</span>
+              <span class="tag">Declarative + imperative</span>
+            </div>
+          </div>
+          <div class="reveal delay-2">
+            <h3>Current effect vocabulary</h3>
+            <table class="vocab-table">
+              <tbody>
+                <tr>
+                  <th scope="row">Interaction feedback</th>
+                  <td>
+                    <div class="effect-list">
+                      <span class="effect-chip">edge</span>
+                      <span class="effect-chip">tick</span>
+                      <span class="effect-chip">align</span>
+                      <span class="effect-chip">hint</span>
+                    </div>
+                    <span class="muted small">Feedback while an interaction is happening.</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Process confirmation</th>
+                  <td>
+                    <div class="effect-list">
+                      <span class="effect-chip process">success</span>
+                      <span class="effect-chip process">error</span>
+                    </div>
+                    <span class="muted small">The outcome of a completed action.</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="small" style="margin-top:.8rem">Intensity is normalized from <code>0.0</code> to <code>1.0</code>; the platform still applies the user's system setting.</p>
+          </div>
+        </div>
+        <span class="slide-number">05</span>
+      </section>
+
+      <section class="slide" id="slide-6" data-title="JavaScript API" aria-roledescription="slide" aria-label="Slide 6 of 13: JavaScript API">
+        <div class="grid-2 split-wide">
+          <div>
+            <p class="eyebrow reveal">Imperative API</p>
+            <h2 class="reveal delay-1">App logic knows when the moment is right.</h2>
+            <div class="api-signature reveal delay-2">navigator.<span class="method">playHaptics</span>(effect, intensity)</div>
+            <p class="reveal delay-3">Use JavaScript for canvas interactions, spatial thresholds, game logic, and other cases that CSS cannot express.</p>
+            <div class="tags reveal delay-4">
+              <span class="tag">Returns undefined</span>
+              <span class="tag">Targets recent input</span>
+              <span class="tag">Sticky activation</span>
+            </div>
+          </div>
+          <div>
+            <div class="code-card reveal delay-1">
+              <pre><span class="token-keyword">if</span> (crossedAlignmentGuide) {
+  navigator.playHaptics(
+    <span class="token-string">"align"</span>,
+    <span class="token-number">0.7</span>
+  );
+}</pre>
+            </div>
+            <div class="logic-map reveal delay-2" aria-label="Object moving onto an alignment guide">
+              <div class="guide"></div>
+              <div class="object"></div>
+              <div class="label">custom spatial logic</div>
+            </div>
+          </div>
+        </div>
+        <span class="slide-number">06</span>
+      </section>
+
+      <section class="slide" id="slide-7" data-title="CSS API" aria-roledescription="slide" aria-label="Slide 7 of 13: CSS API">
+        <p class="eyebrow reveal">Declarative API</p>
+        <h2 class="reveal delay-1">Put feedback beside the interaction.</h2>
+        <p class="lede reveal delay-2">A CSS path makes common UI haptics easy to author and gives the browser a shorter path from interaction to actuation.</p>
+        <div class="css-choice reveal delay-3">
+          <article class="choice-card primary">
+            <span class="tag">Selector state</span>
+            <h3>Nested <code>@haptic</code></h3>
+            <div class="code-card">
+              <pre>.button:active {
+  scale: <span class="token-number">0.96</span>;
+  <span class="token-keyword">@haptic</span> align <span class="token-number">0.8</span>;
+}</pre>
+            </div>
+          </article>
+          <div class="versus">or</div>
+          <article class="choice-card">
+            <span class="tag">Event trigger</span>
+            <h3><code>haptic</code> property</h3>
+            <div class="code-card">
+              <pre>.button {
+  haptic:
+    click align <span class="token-number">0.8</span>;
+}</pre>
+            </div>
+          </article>
+        </div>
+        <span class="slide-number">07</span>
+      </section>
+
+      <section class="slide" id="slide-8" data-title="The CSS decision" aria-roledescription="slide" aria-label="Slide 8 of 13: The CSS design decision">
+        <p class="eyebrow reveal">A decision for TPAC</p>
+        <h2 class="reveal delay-1">Two models. One goal: fast, understandable feedback.</h2>
+        <div class="css-choice reveal delay-2">
+          <article class="choice-card primary">
+            <span class="tag">Option 1</span>
+            <h3>Nested <code>@haptic</code></h3>
+            <p>Fires when a CSS rule starts matching. It is concise, self-contained, and naturally colocated with visual state.</p>
+            <div class="code-card">
+              <pre>.photo:snapped {
+  <span class="token-keyword">@haptic</span> tick <span class="token-number">0.5</span>;
+}</pre>
+            </div>
+          </article>
+          <div class="versus">vs</div>
+          <article class="choice-card">
+            <span class="tag">Option 2</span>
+            <h3>Event-trigger</h3>
+            <p>Fires from an associated event trigger. It makes causality explicit and may actuate closer to the input.</p>
+            <div class="code-card">
+              <pre>.button {
+  haptic: click
+    align <span class="token-number">0.8</span>;
+}</pre>
+            </div>
+          </article>
+        </div>
+        <div class="decision-strip reveal delay-3">
+          <div class="decision-item"><strong>Mental model</strong>Selector state or event source?</div>
+          <div class="decision-item"><strong>Timing</strong>Style discovery or known mapping?</div>
+          <div class="decision-item"><strong>Composition</strong>Independent rules or reusable triggers?</div>
+          <div class="decision-item"><strong>Dependency</strong>Self-contained or Animation Triggers?</div>
+        </div>
+        <span class="slide-number">08</span>
+      </section>
+
+      <section class="slide" id="slide-9" data-title="Canvas alignment demo" aria-roledescription="slide" aria-label="Slide 9 of 13: Canvas alignment scenario">
+        <div class="demo-layout">
+          <div>
+            <p class="eyebrow reveal">Scenario 1 / JavaScript</p>
+            <h2 class="reveal delay-1">Feel the guideline before you see the lock.</h2>
+            <p class="reveal delay-2">Canvas geometry is app-specific. JavaScript detects the alignment threshold and requests the semantic <code>align</code> effect.</p>
+            <button class="demo-button reveal delay-3" type="button" data-replay="alignment-stage" data-effect="align" data-intensity="0.7">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l11-7Z"/></svg>
+              Replay alignment
+            </button>
+          </div>
+          <div class="demo-stage alignment-stage reveal delay-2" aria-label="Animated object snapping to center alignment guides">
+            <div class="v-guide"></div>
+            <div class="h-guide"></div>
+            <span class="snap-label">alignment guide</span>
+            <div class="drag-object">drag me</div>
+            <span class="pulse alignment-pulse" aria-hidden="true"></span>
+          </div>
+        </div>
+        <span class="slide-number">09</span>
+      </section>
+
+      <section class="slide" id="slide-10" data-title="Carousel snap demo" aria-roledescription="slide" aria-label="Slide 10 of 13: Photo carousel scenario">
+        <div class="demo-layout">
+          <div>
+            <p class="eyebrow reveal">Scenario 2 / CSS</p>
+            <h2 class="reveal delay-1">Every snap gets a tactile punctuation mark.</h2>
+            <p class="reveal delay-2">The carousel already exposes a snap interaction. Declarative haptics keeps the feedback alongside that behavior without JavaScript in the critical path.</p>
+            <button class="demo-button reveal delay-3" type="button" data-replay="carousel-stage" data-effect="tick" data-intensity="0.5">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l11-7Z"/></svg>
+              Replay carousel
+            </button>
+          </div>
+          <div class="demo-stage carousel-stage reveal delay-2" aria-label="Animated photo carousel snapping between three images">
+            <div class="carousel-window">
+              <div class="carousel-track">
+                <div class="carousel-card"></div>
+                <div class="carousel-card"></div>
+                <div class="carousel-card"></div>
+              </div>
+            </div>
+            <span class="pulse carousel-pulse" aria-hidden="true"></span>
+          </div>
+        </div>
+        <span class="slide-number">10</span>
+      </section>
+
+      <section class="slide" id="slide-11" data-title="Security and anti-abuse" aria-roledescription="slide" aria-label="Slide 11 of 13: Security and anti-abuse">
+        <p class="eyebrow reveal">Designed for restraint</p>
+        <h2 class="reveal delay-1">Haptics can delight. They can also annoy.</h2>
+        <p class="reveal delay-2">The API minimizes exposed information and gives browsers layers of control over when physical feedback is appropriate.</p>
+        <div class="safety-grid">
+          <section class="safety-column reveal delay-2">
+            <h3><span class="metric-icon">API</span> Guard the request</h3>
+            <ul class="safety-list">
+              <li><strong>Sticky activation</strong>Imperative calls follow a user interaction.</li>
+              <li><strong>Permissions Policy</strong>Cross-origin access requires delegation.</li>
+              <li><strong>Silent outcomes</strong>No hardware or playback result is exposed.</li>
+              <li><strong>Semantic vocabulary</strong>No arbitrary waveform programming.</li>
+            </ul>
+          </section>
+          <section class="safety-column ua reveal delay-3">
+            <h3><span class="metric-icon">UA</span> Control abuse</h3>
+            <ul class="safety-list">
+              <li><strong>Throttling</strong>Rate-limit excessive requests.</li>
+              <li><strong>Origin suppression</strong>Silence abusive sites.</li>
+              <li><strong>Global controls</strong>Let users disable haptics.</li>
+              <li><strong>Per-site controls</strong>Respect user choice by origin.</li>
+            </ul>
+          </section>
+        </div>
+        <span class="slide-number">11</span>
+      </section>
+
+      <section class="slide" id="slide-12" data-title="Project status" aria-roledescription="slide" aria-label="Slide 12 of 13: Project status">
+        <p class="eyebrow reveal">Where we are</p>
+        <h2 class="reveal delay-1">One API is becoming real. One shape is being decided.</h2>
+        <div class="status-lanes reveal delay-2">
+          <div class="status-lane"><strong>JavaScript: shipping path</strong><span>Available for DevTrial in Edge on Windows and approaching an Origin Trial.</span></div>
+          <div class="status-lane"><strong>CSS: standards path</strong><span>The CSSWG is deciding between nested <code>@haptic</code> and event-trigger shapes.</span></div>
+        </div>
+        <div class="status-track reveal delay-3" aria-label="Web Haptics project status">
+          <div class="status-step done">
+            <span class="status-dot"></span>
+            <h3>Prototype</h3>
+            <p>Semantic effects reach native Windows haptics-capable input devices.</p>
+          </div>
+          <div class="status-step current">
+            <span class="status-dot"></span>
+            <h3>DevTrial</h3>
+            <p>Developers can enable and exercise <code>navigator.playHaptics()</code> today.</p>
+          </div>
+          <div class="status-step">
+            <span class="status-dot"></span>
+            <h3>Origin Trial</h3>
+            <p>Broader real-world feedback is the next milestone for the imperative API.</p>
+          </div>
+        </div>
+        <span class="slide-number">12</span>
+      </section>
+
+      <section class="slide" id="slide-13" data-title="Try it and shape it" aria-roledescription="slide" aria-label="Slide 13 of 13: Try it and shape it">
+        <p class="eyebrow reveal">Your turn</p>
+        <h2 class="reveal delay-1">Try it. Stress it. Help shape it.</h2>
+        <p class="lede reveal delay-2">We need real interactions, real hardware, and standards feedback to make semantic haptics feel native everywhere.</p>
+        <div class="cta-grid reveal delay-3">
+          <a class="link-card primary" href="https://github.com/WICG/web-haptics/blob/main/HOWTO.md">
+            <small>Enable the DevTrial</small>
+            <strong>github.com/WICG/web-haptics/blob/main/HOWTO.md</strong>
+          </a>
+          <a class="link-card" href="https://github.com/WICG/web-haptics/issues">
+            <small>Join the discussion</small>
+            <strong>github.com/WICG/web-haptics/issues</strong>
+          </a>
+        </div>
+        <p class="closing-line reveal delay-4">What should tactile feedback feel like on the web?</p>
+        <span class="slide-number">13</span>
+      </section>
+    </main>
+
+    <footer class="bottombar">
+      <div class="progress-wrap">
+        <progress id="progress" max="13" value="1" aria-label="Presentation progress"></progress>
+        <span class="counter" id="counter" aria-live="polite">01 / 13</span>
+      </div>
+      <span class="key-hint">Arrow keys to navigate · F for fullscreen · P to pause</span>
+    </footer>
+  </div>
+
+  <div class="sr-only" id="announcer" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll(".slide")];
+      const previousButton = document.querySelector("#prev");
+      const nextButton = document.querySelector("#next");
+      const pauseButton = document.querySelector("#pause");
+      const fullscreenButton = document.querySelector("#fullscreen");
+      const progress = document.querySelector("#progress");
+      const counter = document.querySelector("#counter");
+      const announcer = document.querySelector("#announcer");
+      let current = 0;
+      let touchStartX = 0;
+
+      const number = (value) => String(value).padStart(2, "0");
+
+      const indexFromHash = () => {
+        const match = location.hash.match(/^#slide-(\d+)$/);
+        if (!match) return 0;
+        return Math.max(0, Math.min(slides.length - 1, Number(match[1]) - 1));
+      };
+
+      const show = (index, updateHash = true) => {
+        const nextIndex = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, slideIndex) => {
+          slide.classList.toggle("is-active", slideIndex === nextIndex);
+          slide.classList.toggle("was-active", slideIndex < nextIndex);
+          slide.setAttribute("aria-hidden", slideIndex === nextIndex ? "false" : "true");
+          slide.inert = slideIndex !== nextIndex;
+        });
+        current = nextIndex;
+        previousButton.disabled = current === 0;
+        nextButton.disabled = current === slides.length - 1;
+        progress.value = current + 1;
+        counter.textContent = `${number(current + 1)} / ${number(slides.length)}`;
+        document.title = `${slides[current].dataset.title} · Web Haptics`;
+        announcer.textContent = `Slide ${current + 1} of ${slides.length}: ${slides[current].dataset.title}`;
+        if (updateHash) {
+          history.replaceState(null, "", `#slide-${current + 1}`);
+        }
+      };
+
+      const move = (delta) => show(current + delta);
+
+      previousButton.addEventListener("click", () => move(-1));
+      nextButton.addEventListener("click", () => move(1));
+
+      document.addEventListener("keydown", (event) => {
+        const target = event.target;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+        if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(event.key)) {
+          event.preventDefault();
+          move(1);
+        } else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) {
+          event.preventDefault();
+          move(-1);
+        } else if (event.key === "Home") {
+          event.preventDefault();
+          show(0);
+        } else if (event.key === "End") {
+          event.preventDefault();
+          show(slides.length - 1);
+        } else if (event.key.toLowerCase() === "f") {
+          event.preventDefault();
+          toggleFullscreen();
+        } else if (event.key.toLowerCase() === "p") {
+          event.preventDefault();
+          togglePause();
+        }
+      });
+
+      document.addEventListener("touchstart", (event) => {
+        touchStartX = event.changedTouches[0].clientX;
+      }, { passive: true });
+
+      document.addEventListener("touchend", (event) => {
+        const distance = event.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(distance) < 50) return;
+        move(distance < 0 ? 1 : -1);
+      }, { passive: true });
+
+      const togglePause = () => {
+        const paused = document.body.classList.toggle("motion-paused");
+        pauseButton.setAttribute("aria-pressed", String(paused));
+        pauseButton.setAttribute("aria-label", paused ? "Resume animations" : "Pause animations");
+        pauseButton.innerHTML = paused
+          ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7Z"/></svg>'
+          : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>';
+      };
+
+      const toggleFullscreen = async () => {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        } else {
+          await document.exitFullscreen();
+        }
+      };
+
+      pauseButton.addEventListener("click", togglePause);
+      fullscreenButton.addEventListener("click", toggleFullscreen);
+
+      document.addEventListener("fullscreenchange", () => {
+        const active = Boolean(document.fullscreenElement);
+        fullscreenButton.setAttribute("aria-label", active ? "Exit fullscreen" : "Enter fullscreen");
+      });
+
+      window.addEventListener("hashchange", () => show(indexFromHash(), false));
+
+      document.querySelectorAll("[data-replay]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const stage = document.querySelector(`.${button.dataset.replay}`);
+          const animatedElements = stage.querySelectorAll(
+            ".drag-object, .alignment-pulse, .carousel-track, .carousel-pulse"
+          );
+          animatedElements.forEach((element) => {
+            element.style.animation = "none";
+          });
+          void stage.offsetWidth;
+          animatedElements.forEach((element) => {
+            element.style.removeProperty("animation");
+          });
+          if (typeof navigator.playHaptics === "function") {
+            navigator.playHaptics(button.dataset.effect, Number(button.dataset.intensity));
+          }
+        });
+      });
+
+      show(indexFromHash(), false);
+    })();
+  </script>
+</body>
+</html>
