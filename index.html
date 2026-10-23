@@ -1633,6 +1633,10 @@
       animation-play-state: paused !important;
     }
 
+    body.motion-paused .is-active .reveal {
+      animation-play-state: running !important;
+    }
+
     .sr-only {
       position: absolute;
       width: 1px;
@@ -2007,7 +2011,7 @@
       <section class="slide" id="slide-7" data-title="CSS API" aria-roledescription="slide" aria-label="Slide 7 of 13: CSS API">
         <p class="eyebrow reveal">Declarative API</p>
         <h2 class="reveal delay-1">Put feedback beside the interaction.</h2>
-        <p class="lede reveal delay-2">A CSS path makes common UI haptics easy to author and gives the browser a shorter path from interaction to actuation.</p>
+        <p class="lede reveal delay-2">A CSS path keeps common UI feedback beside the interaction and removes author JavaScript from the critical path.</p>
         <div class="css-choice reveal delay-3">
           <article class="choice-card primary">
             <span class="tag">Selector state</span>
@@ -2250,6 +2254,7 @@
       document.addEventListener("keydown", (event) => {
         const target = event.target;
         if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+        if (event.key === " " && target instanceof Element && target.closest("button, a")) return;
         if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(event.key)) {
           event.preventDefault();
           move(1);
