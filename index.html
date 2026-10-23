@@ -2387,6 +2387,7 @@
       const counter = document.querySelector("#counter");
       const announcer = document.querySelector("#announcer");
       const replayTimers = new Set();
+      let activeReplayButton = null;
       let current = 0;
       let touchStartX = 0;
 
@@ -2394,6 +2395,53 @@
       const clearReplayTimers = () => {
         replayTimers.forEach((timer) => clearTimeout(timer));
         replayTimers.clear();
+      };
+      const runReplay = (button) => {
+        if (document.body.classList.contains("motion-paused")) return;
+
+        const stage = document.querySelector(`.${button.dataset.replay}`);
+        const animatedElements = stage.querySelectorAll(
+          ".drag-object, .alignment-pulse, .carousel-track, .carousel-pulse"
+        );
+        clearReplayTimers();
+        animatedElements.forEach((element) => {
+          element.style.animation = "none";
+        });
+        void stage.offsetWidth;
+        animatedElements.forEach((element) => {
+          element.style.removeProperty("animation");
+        });
+
+        if (typeof navigator.playHaptics !== "function") {
+          activeReplayButton = null;
+          return;
+        }
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          activeReplayButton = null;
+          navigator.playHaptics(
+            button.dataset.effect,
+            Number(button.dataset.intensity)
+          );
+          return;
+        }
+
+        activeReplayButton = button;
+        const delays = button.dataset.effect === "align"
+          ? [2300]
+          : [2240, 4620, 6900];
+        delays.forEach((delay, index) => {
+          const timer = window.setTimeout(() => {
+            replayTimers.delete(timer);
+            if (stage.closest(".slide")?.classList.contains("is-active")) {
+              navigator.playHaptics(
+                button.dataset.effect,
+                Number(button.dataset.intensity)
+              );
+            }
+            if (index === delays.length - 1) activeReplayButton = null;
+          }, delay);
+          replayTimers.add(timer);
+        });
       };
 
       const indexFromHash = () => {
@@ -2406,6 +2454,7 @@
         const nextIndex = Math.max(0, Math.min(slides.length - 1, index));
         if (nextIndex !== current) {
           clearReplayTimers();
+          activeReplayButton = null;
         }
         slides.forEach((slide, slideIndex) => {
           slide.classList.toggle("is-active", slideIndex === nextIndex);
@@ -2468,6 +2517,11 @@
       const togglePause = () => {
         const paused = document.body.classList.toggle("motion-paused");
         if (paused) clearReplayTimers();
+        else if (
+          activeReplayButton?.closest(".slide")?.classList.contains("is-active")
+        ) {
+          runReplay(activeReplayButton);
+        }
         pauseButton.setAttribute("aria-pressed", String(paused));
         pauseButton.setAttribute("aria-label", paused ? "Resume animations" : "Pause animations");
         pauseButton.innerHTML = paused
@@ -2494,47 +2548,7 @@
       window.addEventListener("hashchange", () => show(indexFromHash(), false));
 
       document.querySelectorAll("[data-replay]").forEach((button) => {
-        button.addEventListener("click", () => {
-          const stage = document.querySelector(`.${button.dataset.replay}`);
-          const animatedElements = stage.querySelectorAll(
-            ".drag-object, .alignment-pulse, .carousel-track, .carousel-pulse"
-          );
-          animatedElements.forEach((element) => {
-            element.style.animation = "none";
-          });
-          void stage.offsetWidth;
-          animatedElements.forEach((element) => {
-            element.style.removeProperty("animation");
-          });
-          if (
-            typeof navigator.playHaptics === "function" &&
-            !document.body.classList.contains("motion-paused")
-          ) {
-            clearReplayTimers();
-            if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-              navigator.playHaptics(
-                button.dataset.effect,
-                Number(button.dataset.intensity)
-              );
-              return;
-            }
-            const delays = button.dataset.effect === "align"
-              ? [2300]
-              : [2240, 4620, 6900];
-            delays.forEach((delay) => {
-              const timer = window.setTimeout(() => {
-                replayTimers.delete(timer);
-                if (stage.closest(".slide")?.classList.contains("is-active")) {
-                  navigator.playHaptics(
-                    button.dataset.effect,
-                    Number(button.dataset.intensity)
-                  );
-                }
-              }, delay);
-              replayTimers.add(timer);
-            });
-          }
-        });
+        button.addEventListener("click", () => runReplay(button));
       });
 
       show(indexFromHash(), false);
