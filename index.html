@@ -2391,6 +2391,10 @@
       let touchStartX = 0;
 
       const number = (value) => String(value).padStart(2, "0");
+      const clearReplayTimers = () => {
+        replayTimers.forEach((timer) => clearTimeout(timer));
+        replayTimers.clear();
+      };
 
       const indexFromHash = () => {
         const match = location.hash.match(/^#slide-(\d+)$/);
@@ -2401,8 +2405,7 @@
       const show = (index, updateHash = true) => {
         const nextIndex = Math.max(0, Math.min(slides.length - 1, index));
         if (nextIndex !== current) {
-          replayTimers.forEach((timer) => clearTimeout(timer));
-          replayTimers.clear();
+          clearReplayTimers();
         }
         slides.forEach((slide, slideIndex) => {
           slide.classList.toggle("is-active", slideIndex === nextIndex);
@@ -2464,6 +2467,7 @@
 
       const togglePause = () => {
         const paused = document.body.classList.toggle("motion-paused");
+        if (paused) clearReplayTimers();
         pauseButton.setAttribute("aria-pressed", String(paused));
         pauseButton.setAttribute("aria-label", paused ? "Resume animations" : "Pause animations");
         pauseButton.innerHTML = paused
@@ -2502,9 +2506,18 @@
           animatedElements.forEach((element) => {
             element.style.removeProperty("animation");
           });
-          if (typeof navigator.playHaptics === "function") {
-            replayTimers.forEach((timer) => clearTimeout(timer));
-            replayTimers.clear();
+          if (
+            typeof navigator.playHaptics === "function" &&
+            !document.body.classList.contains("motion-paused")
+          ) {
+            clearReplayTimers();
+            if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+              navigator.playHaptics(
+                button.dataset.effect,
+                Number(button.dataset.intensity)
+              );
+              return;
+            }
             const delays = button.dataset.effect === "align"
               ? [2300]
               : [2240, 4620, 6900];
