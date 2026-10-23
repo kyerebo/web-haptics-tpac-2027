@@ -77,6 +77,10 @@
       min-height: 100dvh;
     }
 
+    .rotate-message {
+      display: none;
+    }
+
     .topbar,
     .bottombar {
       display: flex;
@@ -1637,6 +1641,12 @@
       animation-play-state: running !important;
     }
 
+    body.motion-paused .is-active .device {
+      animation: none !important;
+      opacity: 1;
+      transform: none;
+    }
+
     .sr-only {
       position: absolute;
       width: 1px;
@@ -1716,6 +1726,162 @@
       }
     }
 
+    @media (max-width: 900px), (max-height: 650px) {
+      .slide {
+        --pad: 1.5rem;
+      }
+
+      .slide h2 {
+        font-size: clamp(1.65rem, 3.6vw, 2.5rem);
+      }
+
+      .slide p {
+        line-height: 1.32;
+      }
+
+      .device-landscape {
+        min-height: 10rem;
+        padding-top: .35rem;
+      }
+
+      .device {
+        min-height: 8.5rem;
+        padding: .45rem .3rem;
+      }
+
+      .device svg {
+        max-height: 5.3rem;
+      }
+
+      .device strong {
+        margin-top: .4rem;
+      }
+
+      .choice-card {
+        min-height: 10.5rem;
+        padding: .65rem;
+      }
+
+      .choice-card p {
+        font-size: clamp(.54rem, .82vw, .78rem);
+        line-height: 1.25;
+      }
+
+      .choice-card .code-card {
+        padding: .5rem .65rem;
+      }
+
+      .choice-card .code-card pre {
+        line-height: 1.45;
+      }
+
+      #slide-5 .grid-2 {
+        height: auto;
+      }
+
+      #slide-5 .semantic-flow {
+        margin-top: .7rem;
+      }
+
+      #slide-5 .flow-node {
+        min-height: 4.4rem;
+      }
+
+      #slide-5 .vocab-table th,
+      #slide-5 .vocab-table td {
+        padding: .55rem;
+      }
+
+      #slide-6 .code-card {
+        padding: .7rem .9rem;
+      }
+
+      #slide-6 .logic-map {
+        min-height: 11.5rem;
+      }
+
+      .decision-item {
+        padding: .4rem .5rem;
+        font-size: clamp(.48rem, .66vw, .68rem);
+      }
+
+      .demo-stage,
+      .carousel-stage {
+        min-height: 17rem;
+      }
+
+      .safety-grid {
+        gap: .55rem;
+        margin-top: .5rem;
+      }
+
+      .safety-column {
+        padding: .65rem;
+      }
+
+      .safety-list {
+        gap: .4rem;
+        margin-top: .45rem;
+      }
+
+      .safety-list li {
+        min-height: 2.8rem;
+        padding: .45rem;
+      }
+
+      .status-lanes {
+        gap: .55rem;
+        margin-top: .55rem;
+      }
+
+      .status-lane {
+        padding: .65rem .8rem;
+      }
+
+      .status-track {
+        margin-top: .6rem;
+      }
+
+      .status-step {
+        padding-top: 2.5rem;
+      }
+    }
+
+    @media (orientation: portrait) and (max-width: 760px) {
+      body {
+        display: grid;
+        place-items: center;
+        min-height: 100dvh;
+        padding: 2rem;
+        overflow: auto;
+      }
+
+      .deck-shell,
+      .skip-link {
+        display: none;
+      }
+
+      .rotate-message {
+        display: grid;
+        gap: .8rem;
+        max-width: 24rem;
+        text-align: center;
+      }
+
+      .rotate-message .brand-mark {
+        justify-self: center;
+      }
+
+      .rotate-message strong {
+        font-size: 1.55rem;
+      }
+
+      .rotate-message span:last-child {
+        color: var(--muted);
+        line-height: 1.45;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *,
       *::before,
@@ -1788,6 +1954,11 @@
 </head>
 <body>
   <a class="skip-link" href="#deck">Skip to slides</a>
+  <div class="rotate-message" role="status">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <strong>Rotate your device</strong>
+    <span>This presentation is designed for a landscape screen.</span>
+  </div>
   <div class="deck-shell">
     <header class="topbar">
       <div class="brand">
@@ -2215,6 +2386,7 @@
       const progress = document.querySelector("#progress");
       const counter = document.querySelector("#counter");
       const announcer = document.querySelector("#announcer");
+      const replayTimers = new Set();
       let current = 0;
       let touchStartX = 0;
 
@@ -2228,6 +2400,10 @@
 
       const show = (index, updateHash = true) => {
         const nextIndex = Math.max(0, Math.min(slides.length - 1, index));
+        if (nextIndex !== current) {
+          replayTimers.forEach((timer) => clearTimeout(timer));
+          replayTimers.clear();
+        }
         slides.forEach((slide, slideIndex) => {
           slide.classList.toggle("is-active", slideIndex === nextIndex);
           slide.classList.toggle("was-active", slideIndex < nextIndex);
@@ -2327,7 +2503,23 @@
             element.style.removeProperty("animation");
           });
           if (typeof navigator.playHaptics === "function") {
-            navigator.playHaptics(button.dataset.effect, Number(button.dataset.intensity));
+            replayTimers.forEach((timer) => clearTimeout(timer));
+            replayTimers.clear();
+            const delays = button.dataset.effect === "align"
+              ? [2300]
+              : [2240, 4620, 6900];
+            delays.forEach((delay) => {
+              const timer = window.setTimeout(() => {
+                replayTimers.delete(timer);
+                if (stage.closest(".slide")?.classList.contains("is-active")) {
+                  navigator.playHaptics(
+                    button.dataset.effect,
+                    Number(button.dataset.intensity)
+                  );
+                }
+              }, delay);
+              replayTimers.add(timer);
+            });
           }
         });
       });
