@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#f4f5f8">
-  <title>Web Haptics: Semantic touch for the web</title>
+  <title>Web Haptics: Semantically defined feedback</title>
   <style>
     :root {
       --ink: #162033;
@@ -423,6 +423,27 @@
       background: #ff6f7d;
       border-radius: 50%;
       box-shadow: .9rem 0 #ffca66, 1.8rem 0 #61d39b;
+    }
+
+    .code-card.soft {
+      color: var(--ink);
+      background: #f4f6fa;
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    .code-card.soft::before {
+      background: var(--line-strong);
+      box-shadow: .9rem 0 #cbd2df, 1.8rem 0 #dde2eb;
+    }
+
+    .code-card.soft .token-number {
+      color: var(--accent-dark);
+    }
+
+    .code-card.soft .token-keyword,
+    .code-card.soft .token-string {
+      color: var(--accent-dark);
     }
 
     .code-card pre {
@@ -853,12 +874,61 @@
       font-weight: 900;
     }
 
+    .failure-list {
+      display: grid;
+      gap: .75rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .failure-list li {
+      padding: 1rem 1.1rem;
+      color: var(--muted);
+      background: white;
+      border: 1px solid var(--line);
+      border-left: .24rem solid var(--accent);
+      border-radius: .8rem;
+      font-size: clamp(.68rem, .88vw, 1rem);
+      line-height: 1.4;
+    }
+
+    .failure-list strong {
+      display: block;
+      margin-bottom: .2rem;
+      color: var(--ink);
+      font-size: 1.05em;
+    }
+
+    .semantic-intro {
+      display: grid;
+      grid-template-columns: .88fr 1.12fr;
+      gap: clamp(2rem, 4vw, 5rem);
+      align-items: center;
+      height: 100%;
+    }
+
+    .semantic-visual {
+      display: grid;
+      gap: 1.5rem;
+      align-content: center;
+    }
+
     .semantic-flow {
       display: grid;
       grid-template-columns: 1fr auto 1fr auto 1fr;
       gap: .7rem;
       align-items: center;
       margin-top: 1.4rem;
+    }
+
+    .semantic-visual .semantic-flow {
+      margin-top: 0;
+    }
+
+    .semantic-visual .tags {
+      justify-content: center;
+      margin-top: .4rem;
     }
 
     .flow-node {
@@ -956,6 +1026,19 @@
       background: #fff0f2;
     }
 
+    .vocabulary-layout {
+      display: grid;
+      grid-template-columns: .72fr 1.28fr;
+      gap: clamp(1.5rem, 3vw, 3.5rem);
+      align-items: center;
+      height: 100%;
+    }
+
+    .vocabulary-layout .vocab-table th,
+    .vocabulary-layout .vocab-table td {
+      padding: clamp(1rem, 1.5vw, 1.5rem);
+    }
+
     .api-signature {
       margin: 1.2rem 0;
       color: var(--ink);
@@ -1039,6 +1122,174 @@
       }
     }
 
+    .js-visual-stack {
+      display: grid;
+      gap: 1.25rem;
+      align-content: center;
+    }
+
+    .js-visual-stack .code-card {
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-snap-stage {
+      position: relative;
+      min-height: 17rem;
+      overflow: hidden;
+      background:
+        linear-gradient(rgb(22 32 51 / 5%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(22 32 51 / 5%) 1px, transparent 1px),
+        #fafbfe;
+      background-size: 1.6rem 1.6rem;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+    }
+
+    .window-snap-stage::before {
+      content: "Resizable workspace";
+      position: absolute;
+      top: .75rem;
+      left: 1rem;
+      color: var(--muted);
+      font-size: clamp(.55rem, .7vw, .8rem);
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .workspace-pane {
+      position: absolute;
+      top: 19%;
+      bottom: 10%;
+      background: white;
+      border: 1px solid var(--line-strong);
+      box-shadow: 0 .6rem 1.5rem rgb(22 32 51 / 8%);
+    }
+
+    .workspace-pane::before {
+      content: "";
+      position: absolute;
+      top: .7rem;
+      left: .8rem;
+      width: .38rem;
+      height: .38rem;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: .7rem 0 var(--line-strong), 1.4rem 0 var(--line-strong);
+    }
+
+    .workspace-pane.left {
+      left: 7%;
+      width: 33%;
+      border-radius: .8rem 0 0 .8rem;
+    }
+
+    .workspace-pane.right {
+      right: 7%;
+      left: 41%;
+      border-radius: 0 .8rem .8rem 0;
+    }
+
+    .workspace-divider {
+      position: absolute;
+      z-index: 3;
+      top: 17%;
+      bottom: 8%;
+      left: 40%;
+      width: .42rem;
+      background: var(--accent);
+      border-radius: 999px;
+      box-shadow: 0 0 0 .35rem rgb(91 87 232 / 10%);
+    }
+
+    .workspace-divider::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1.25rem;
+      height: 2.5rem;
+      background: white;
+      border: 2px solid var(--accent);
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+    }
+
+    .window-snap-pulse {
+      top: 52%;
+      left: 50%;
+      opacity: 0;
+    }
+
+    .is-active .workspace-pane.left {
+      animation: pane-left-snap 5.2s var(--ease) infinite;
+    }
+
+    .is-active .workspace-pane.right {
+      animation: pane-right-snap 5.2s var(--ease) infinite;
+    }
+
+    .is-active .workspace-divider {
+      animation: divider-snap 5.2s var(--ease) infinite;
+    }
+
+    .is-active .window-snap-pulse {
+      animation: window-snap-pulse 5.2s var(--ease) infinite;
+    }
+
+    @keyframes pane-left-snap {
+      0%,
+      12%,
+      88%,
+      100% {
+        width: 33%;
+      }
+      44%,
+      68% {
+        width: 43%;
+      }
+    }
+
+    @keyframes pane-right-snap {
+      0%,
+      12%,
+      88%,
+      100% {
+        left: 41%;
+      }
+      44%,
+      68% {
+        left: 51%;
+      }
+    }
+
+    @keyframes divider-snap {
+      0%,
+      12%,
+      88%,
+      100% {
+        left: 40%;
+      }
+      44%,
+      68% {
+        left: 50%;
+      }
+    }
+
+    @keyframes window-snap-pulse {
+      0%,
+      42%,
+      70%,
+      100% {
+        opacity: 0;
+      }
+      45%,
+      64% {
+        opacity: 1;
+      }
+    }
+
     .css-choice {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
@@ -1073,6 +1324,26 @@
 
     .choice-card .code-card::before {
       margin-bottom: .7rem;
+    }
+
+    #slide-8 h2 {
+      max-width: 25ch;
+      font-size: clamp(2rem, 3.5vw, 4rem);
+    }
+
+    #slide-8 .lede {
+      max-width: 56ch;
+      margin-bottom: .8rem;
+      font-size: clamp(.82rem, 1.15vw, 1.3rem);
+    }
+
+    #slide-8 .choice-card {
+      min-height: 12.5rem;
+      padding: .9rem;
+    }
+
+    #slide-8 .choice-card .code-card {
+      padding: .65rem .8rem;
     }
 
     .versus {
@@ -1246,6 +1517,20 @@
       width: .9rem;
       height: .9rem;
       fill: currentColor;
+    }
+
+    .scenario-code {
+      margin-top: .85rem;
+      padding: .75rem .9rem;
+    }
+
+    .scenario-code::before {
+      margin-bottom: .55rem;
+    }
+
+    .scenario-code pre {
+      font-size: clamp(.52rem, .7vw, .8rem);
+      line-height: 1.45;
     }
 
     .carousel-stage {
@@ -1775,10 +2060,6 @@
         line-height: 1.45;
       }
 
-      #slide-5 .grid-2 {
-        height: auto;
-      }
-
       #slide-5 .semantic-flow {
         margin-top: .7rem;
       }
@@ -1787,16 +2068,16 @@
         min-height: 4.4rem;
       }
 
-      #slide-5 .vocab-table th,
-      #slide-5 .vocab-table td {
+      #slide-6 .vocab-table th,
+      #slide-6 .vocab-table td {
         padding: .55rem;
       }
 
-      #slide-6 .code-card {
+      #slide-7 .code-card {
         padding: .7rem .9rem;
       }
 
-      #slide-6 .logic-map {
+      #slide-7 .window-snap-stage {
         min-height: 11.5rem;
       }
 
@@ -1983,9 +2264,9 @@
 
     <main class="deck" id="deck" tabindex="-1">
       <section class="slide title-slide is-active" id="slide-1" data-title="Web Haptics" aria-roledescription="slide" aria-label="Slide 1 of 13: Web Haptics">
-        <p class="eyebrow reveal">TPAC 2027 / Devices and Sensors WG</p>
+        <p class="eyebrow reveal">TPAC 2027</p>
         <h1 class="reveal delay-1">Web Haptics</h1>
-        <p class="subtitle reveal delay-2">Semantic touch for the web, from interaction intent to native feedback.</p>
+        <p class="subtitle reveal delay-2">Semantically defined feedback for interaction with the web</p>
         <div class="speaker reveal delay-3"><span class="speaker-dot"></span>Alexander Kyereboah</div>
         <div class="hero-pulse" aria-hidden="true">
           <span class="ring"></span>
@@ -2035,17 +2316,19 @@
               <circle cx="50" cy="57" r="7"/>
               <circle cx="50" cy="57" r="16" opacity=".35"/>
             </svg>
-            <strong>Phone</strong><small>Impact, selection, notification</small>
+            <strong>Phone</strong>
           </div>
           <div class="device">
-            <svg viewBox="0 0 140 100" aria-hidden="true">
-              <path class="device-accent" d="M24 8h92a8 8 0 0 1 8 8v52H16V16a8 8 0 0 1 8-8Z"/>
-              <path d="M6 68h128l-10 20H16Z"/>
-              <rect x="49" y="47" width="42" height="25" rx="4"/>
-              <circle cx="70" cy="59" r="5"/>
-              <circle cx="70" cy="59" r="12" opacity=".35"/>
+            <svg viewBox="0 0 160 120" aria-hidden="true">
+              <rect class="device-accent" x="28" y="8" width="104" height="67" rx="7"/>
+              <rect x="36" y="16" width="88" height="51" rx="2"/>
+              <path d="M10 77h140l-13 28H23Z"/>
+              <path d="M18 84h124M31 91h98"/>
+              <rect class="device-accent" x="59" y="81" width="42" height="18" rx="4"/>
+              <circle cx="80" cy="90" r="4"/>
+              <circle cx="80" cy="90" r="11" opacity=".35"/>
             </svg>
-            <strong>Touchpad</strong><small>Clicks, alignment, boundaries</small>
+            <strong>Touchpad</strong>
           </div>
           <div class="device">
             <svg viewBox="0 0 100 120" aria-hidden="true">
@@ -2054,7 +2337,7 @@
               <circle cx="50" cy="65" r="6"/>
               <circle cx="50" cy="65" r="14" opacity=".35"/>
             </svg>
-            <strong>Mouse</strong><small>Hover, steps, collisions</small>
+            <strong>Mouse</strong>
           </div>
           <div class="device">
             <svg viewBox="0 0 100 120" aria-hidden="true">
@@ -2063,43 +2346,41 @@
               <circle cx="58" cy="46" r="5"/>
               <circle cx="58" cy="46" r="13" opacity=".35"/>
             </svg>
-            <strong>Pen</strong><small>Drawing, snapping, contact</small>
+            <strong>Pen</strong>
           </div>
         </div>
         <span class="slide-number">03</span>
       </section>
 
       <section class="slide" id="slide-4" data-title="Why vibrate is not enough" aria-roledescription="slide" aria-label="Slide 4 of 13: Why navigator vibrate is not enough">
-        <div class="grid-2">
+        <div class="grid-2 split-wide">
           <div>
             <p class="eyebrow reveal">What the web has today</p>
             <h2 class="reveal delay-1"><code>navigator.vibrate()</code> says how, not why.</h2>
-            <div class="code-card reveal delay-2">
+            <div class="code-card soft reveal delay-2">
               <pre>navigator.vibrate([
   <span class="token-number">100</span>, <span class="token-number">50</span>, <span class="token-number">200</span>
 ]);</pre>
             </div>
           </div>
           <div>
-            <div class="waveform reveal" aria-label="Raw vibration waveform">
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-            </div>
-            <ul class="x-list">
-              <li class="reveal delay-1">Raw duration patterns are hard to map across hardware.</li>
-              <li class="reveal delay-2">The model is phone-first and effectively single-engine.</li>
-              <li class="reveal delay-3">The browser cannot adapt a waveform to native semantic effects.</li>
+            <ul class="failure-list">
+              <li class="reveal"><strong>Raw duration patterns do not communicate intent.</strong>A sequence of milliseconds cannot say whether feedback means alignment, a boundary, or confirmation.</li>
+              <li class="reveal delay-1"><strong>The API is phone-first and effectively single-engine.</strong>It does not reflect today's haptic touchpads, mice, pens, and native OS integrations.</li>
+              <li class="reveal delay-2"><strong>The browser cannot select native haptic effects.</strong>It receives a waveform instead of the semantic cue needed to choose the right platform effect.</li>
             </ul>
-            <p class="quote reveal delay-4">The target is no longer “make my phone shake.”</p>
           </div>
         </div>
         <span class="slide-number">04</span>
       </section>
 
-      <section class="slide" id="slide-5" data-title="Semantic haptics" aria-roledescription="slide" aria-label="Slide 5 of 13: Semantic haptics and effect vocabulary">
-        <p class="eyebrow reveal">Enter Web Haptics</p>
-        <div class="grid-2 split-wide">
+      <section class="slide" id="slide-5" data-title="Semantic haptics" aria-roledescription="slide" aria-label="Slide 5 of 13: Semantic haptics">
+        <div class="semantic-intro">
           <div>
-            <h2 class="reveal delay-1">Declare intent. Let the platform shape the feel.</h2>
+            <p class="eyebrow reveal">Enter Web Haptics</p>
+            <h2 class="reveal delay-1">Declare semantic intent. Let the platform shape the feel.</h2>
+          </div>
+          <div class="semantic-visual reveal delay-2">
             <div class="semantic-flow reveal delay-2" aria-label="Interaction intent mapped by the browser to native hardware">
               <div class="flow-node"><strong>Interaction</strong><span>Object aligns</span></div>
               <span class="flow-arrow" aria-hidden="true">&rarr;</span>
@@ -2113,8 +2394,18 @@
               <span class="tag">Declarative + imperative</span>
             </div>
           </div>
+        </div>
+        <span class="slide-number">05</span>
+      </section>
+
+      <section class="slide" id="slide-6" data-title="Effect vocabulary" aria-roledescription="slide" aria-label="Slide 6 of 13: Current effect vocabulary">
+        <div class="vocabulary-layout">
+          <div>
+            <p class="eyebrow reveal">Semantic vocabulary</p>
+            <h2 class="reveal delay-1">Six effects cover interaction and outcome.</h2>
+            <p class="reveal delay-2">The browser maps each semantic cue to the native effect that best fits the current device and platform.</p>
+          </div>
           <div class="reveal delay-2">
-            <h3>Current effect vocabulary</h3>
             <table class="vocab-table">
               <tbody>
                 <tr>
@@ -2141,48 +2432,41 @@
                 </tr>
               </tbody>
             </table>
-            <p class="small" style="margin-top:.8rem">Intensity is normalized from <code>0.0</code> to <code>1.0</code>; the platform still applies the user's system setting.</p>
-          </div>
-        </div>
-        <span class="slide-number">05</span>
-      </section>
-
-      <section class="slide" id="slide-6" data-title="JavaScript API" aria-roledescription="slide" aria-label="Slide 6 of 13: JavaScript API">
-        <div class="grid-2 split-wide">
-          <div>
-            <p class="eyebrow reveal">Imperative API</p>
-            <h2 class="reveal delay-1">App logic knows when the moment is right.</h2>
-            <div class="api-signature reveal delay-2">navigator.<span class="method">playHaptics</span>(effect, intensity)</div>
-            <p class="reveal delay-3">Use JavaScript for canvas interactions, spatial thresholds, game logic, and other cases that CSS cannot express.</p>
-            <div class="tags reveal delay-4">
-              <span class="tag">Returns undefined</span>
-              <span class="tag">Targets recent input</span>
-              <span class="tag">Sticky activation</span>
-            </div>
-          </div>
-          <div>
-            <div class="code-card reveal delay-1">
-              <pre><span class="token-keyword">if</span> (crossedAlignmentGuide) {
-  navigator.playHaptics(
-    <span class="token-string">"align"</span>,
-    <span class="token-number">0.7</span>
-  );
-}</pre>
-            </div>
-            <div class="logic-map reveal delay-2" aria-label="Object moving onto an alignment guide">
-              <div class="guide"></div>
-              <div class="object"></div>
-              <div class="label">custom spatial logic</div>
-            </div>
+            <p class="small" style="margin-top:1rem">Intensity is normalized from <code>0.0</code> to <code>1.0</code>; the platform still applies the user's system setting.</p>
           </div>
         </div>
         <span class="slide-number">06</span>
       </section>
 
-      <section class="slide" id="slide-7" data-title="CSS API" aria-roledescription="slide" aria-label="Slide 7 of 13: CSS API">
+      <section class="slide" id="slide-7" data-title="JavaScript API" aria-roledescription="slide" aria-label="Slide 7 of 13: JavaScript API">
+        <div class="grid-2 split-wide">
+          <div>
+            <p class="eyebrow reveal">Imperative API</p>
+            <h2 class="reveal delay-1">When app logic knows when the moment is right.</h2>
+            <div class="api-signature reveal delay-2">navigator.<span class="method">playHaptics</span>(effect, intensity)</div>
+            <p class="reveal delay-3">Use JavaScript for canvas interactions, spatial thresholds, game logic, and other cases that CSS cannot express.</p>
+          </div>
+          <div class="js-visual-stack">
+            <div class="code-card reveal delay-1">
+              <pre><span class="token-keyword">if</span> (elementIsAligned) {
+  navigator.playHaptics(<span class="token-string">"align"</span>, <span class="token-number">0.7</span>);
+}</pre>
+            </div>
+            <div class="window-snap-stage reveal delay-2" aria-label="Two windows resizing until their shared boundary snaps to the center of the screen">
+              <div class="workspace-pane left"></div>
+              <div class="workspace-pane right"></div>
+              <div class="workspace-divider"></div>
+              <span class="pulse window-snap-pulse" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+        <span class="slide-number">07</span>
+      </section>
+
+      <section class="slide" id="slide-8" data-title="CSS API" aria-roledescription="slide" aria-label="Slide 8 of 13: CSS API">
         <p class="eyebrow reveal">Declarative API</p>
-        <h2 class="reveal delay-1">Put feedback beside the interaction.</h2>
-        <p class="lede reveal delay-2">A CSS path keeps common UI feedback beside the interaction and removes author JavaScript from the critical path.</p>
+        <h2 class="reveal delay-1">Common interaction feedback, without JavaScript in the critical path.</h2>
+        <p class="lede reveal delay-2">CSS makes routine feedback easy to author and gives the browser room to deliver it with low latency.</p>
         <div class="css-choice reveal delay-3">
           <article class="choice-card primary">
             <span class="tag">Selector state</span>
@@ -2206,42 +2490,6 @@
             </div>
           </article>
         </div>
-        <span class="slide-number">07</span>
-      </section>
-
-      <section class="slide" id="slide-8" data-title="The CSS decision" aria-roledescription="slide" aria-label="Slide 8 of 13: The CSS design decision">
-        <p class="eyebrow reveal">A decision for TPAC</p>
-        <h2 class="reveal delay-1">Two models. One goal: fast, understandable feedback.</h2>
-        <div class="css-choice reveal delay-2">
-          <article class="choice-card primary">
-            <span class="tag">Option 1</span>
-            <h3>Nested <code>@haptic</code></h3>
-            <p>Fires when a CSS rule starts matching. It is concise, self-contained, and naturally colocated with visual state.</p>
-            <div class="code-card">
-              <pre>.photo:snapped {
-  <span class="token-keyword">@haptic</span> tick <span class="token-number">0.5</span>;
-}</pre>
-            </div>
-          </article>
-          <div class="versus">vs</div>
-          <article class="choice-card">
-            <span class="tag">Option 2</span>
-            <h3>Event-trigger</h3>
-            <p>Fires from an associated event trigger. It makes causality explicit and may actuate closer to the input.</p>
-            <div class="code-card">
-              <pre>.button {
-  haptic: click
-    align <span class="token-number">0.8</span>;
-}</pre>
-            </div>
-          </article>
-        </div>
-        <div class="decision-strip reveal delay-3">
-          <div class="decision-item"><strong>Mental model</strong>Selector state or event source?</div>
-          <div class="decision-item"><strong>Timing</strong>Style discovery or known mapping?</div>
-          <div class="decision-item"><strong>Composition</strong>Independent rules or reusable triggers?</div>
-          <div class="decision-item"><strong>Dependency</strong>Self-contained or Animation Triggers?</div>
-        </div>
         <span class="slide-number">08</span>
       </section>
 
@@ -2249,8 +2497,13 @@
         <div class="demo-layout">
           <div>
             <p class="eyebrow reveal">Scenario 1 / JavaScript</p>
-            <h2 class="reveal delay-1">Feel the guideline before you see the lock.</h2>
+            <h2 class="reveal delay-1">Feel the guideline.</h2>
             <p class="reveal delay-2">Canvas geometry is app-specific. JavaScript detects the alignment threshold and requests the semantic <code>align</code> effect.</p>
+            <div class="code-card soft scenario-code reveal delay-3">
+              <pre><span class="token-keyword">if</span> (elementIsAligned) {
+  navigator.playHaptics(<span class="token-string">"align"</span>, <span class="token-number">0.7</span>);
+}</pre>
+            </div>
             <button class="demo-button reveal delay-3" type="button" data-replay="alignment-stage" data-effect="align" data-intensity="0.7">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l11-7Z"/></svg>
               Replay alignment
@@ -2273,6 +2526,11 @@
             <p class="eyebrow reveal">Scenario 2 / CSS</p>
             <h2 class="reveal delay-1">Every snap gets a tactile punctuation mark.</h2>
             <p class="reveal delay-2">The carousel already exposes a snap interaction. Declarative haptics keeps the feedback alongside that behavior without JavaScript in the critical path.</p>
+            <div class="code-card soft scenario-code reveal delay-3">
+              <pre>.photo:snapped {
+  <span class="token-keyword">@haptic</span> tick <span class="token-number">0.5</span>;
+}</pre>
+            </div>
             <button class="demo-button reveal delay-3" type="button" data-replay="carousel-stage" data-effect="tick" data-intensity="0.5">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l11-7Z"/></svg>
               Replay carousel
