@@ -1410,6 +1410,7 @@
       bottom: 8%;
       left: 50%;
       border-left: 2px solid var(--accent);
+      opacity: 0;
     }
 
     .alignment-stage .h-guide {
@@ -1426,6 +1427,7 @@
       color: var(--accent-dark);
       font-size: clamp(.58rem, .73vw, .84rem);
       font-weight: 740;
+      opacity: 0;
     }
 
     .drag-object {
@@ -1461,6 +1463,11 @@
       animation: reveal-pulse 5.2s var(--ease) infinite;
     }
 
+    .is-active .alignment-stage .v-guide,
+    .is-active .alignment-stage .snap-label {
+      animation: reveal-guide 5.2s var(--ease) infinite;
+    }
+
     @keyframes drag-to-guide {
       0%,
       12% {
@@ -1489,6 +1496,19 @@
       45%,
       64% {
         opacity: 1;
+      }
+    }
+
+    @keyframes reveal-guide {
+      0%,
+      36%,
+      74%,
+      100% {
+        opacity: 0;
+      }
+      44%,
+      68% {
+        opacity: .55;
       }
     }
 
@@ -2322,8 +2342,7 @@
             <svg viewBox="0 0 160 120" aria-hidden="true">
               <rect class="device-accent" x="28" y="8" width="104" height="67" rx="7"/>
               <rect x="36" y="16" width="88" height="51" rx="2"/>
-              <path d="M10 77h140l-13 28H23Z"/>
-              <path d="M18 84h124M31 91h98"/>
+              <path d="M59 77h42l39 28H20Z"/>
               <rect class="device-accent" x="59" y="81" width="42" height="18" rx="4"/>
               <circle cx="80" cy="90" r="4"/>
               <circle cx="80" cy="90" r="11" opacity=".35"/>
@@ -2448,7 +2467,7 @@
           </div>
           <div class="js-visual-stack">
             <div class="code-card reveal delay-1">
-              <pre><span class="token-keyword">if</span> (elementIsAligned) {
+              <pre><span class="token-keyword">if</span> (windowBoundaryCentered) {
   navigator.playHaptics(<span class="token-string">"align"</span>, <span class="token-number">0.7</span>);
 }</pre>
             </div>
@@ -2504,10 +2523,6 @@
   navigator.playHaptics(<span class="token-string">"align"</span>, <span class="token-number">0.7</span>);
 }</pre>
             </div>
-            <button class="demo-button reveal delay-3" type="button" data-replay="alignment-stage" data-effect="align" data-intensity="0.7">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l11-7Z"/></svg>
-              Replay alignment
-            </button>
           </div>
           <div class="demo-stage alignment-stage reveal delay-2" aria-label="Animated object snapping to center alignment guides">
             <div class="v-guide"></div>
