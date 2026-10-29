@@ -1848,16 +1848,19 @@
 
     .roadmap {
       display: grid;
-      gap: 1rem;
-      margin-top: 1.1rem;
+      flex: 1;
+      gap: 1.35rem;
+      align-content: center;
+      margin-top: .5rem;
     }
 
     .roadmap-row {
       display: grid;
-      grid-template-columns: 8rem 1fr;
-      gap: 1rem;
+      grid-template-columns: 11rem 1fr;
+      gap: 1.4rem;
       align-items: center;
-      padding: .9rem 1rem;
+      min-height: 8rem;
+      padding: 1.3rem 1.5rem;
       background: white;
       border: 1px solid var(--line);
       border-radius: 1rem;
@@ -1870,13 +1873,13 @@
 
     .roadmap-label strong {
       display: block;
-      margin-bottom: .2rem;
-      font-size: clamp(.72rem, .9vw, 1.05rem);
+      margin-bottom: .3rem;
+      font-size: clamp(.9rem, 1.15vw, 1.35rem);
     }
 
     .roadmap-label span {
       color: var(--muted);
-      font-size: clamp(.54rem, .66vw, .76rem);
+      font-size: clamp(.66rem, .8vw, .92rem);
     }
 
     .roadmap-track {
@@ -1889,7 +1892,7 @@
     .roadmap-track::before {
       content: "";
       position: absolute;
-      top: .72rem;
+      top: 1.2rem;
       right: 15%;
       left: 15%;
       height: .13rem;
@@ -1900,7 +1903,7 @@
     .roadmap-row.css-roadmap .roadmap-track::after {
       content: "";
       position: absolute;
-      top: .72rem;
+      top: 1.2rem;
       left: 15%;
       height: .13rem;
       background: var(--accent);
@@ -1917,7 +1920,7 @@
     .roadmap-step {
       position: relative;
       z-index: 1;
-      padding-top: 2.15rem;
+      padding-top: 2.75rem;
       text-align: center;
     }
 
@@ -1926,8 +1929,8 @@
       position: absolute;
       top: .2rem;
       left: 50%;
-      width: 1.2rem;
-      height: 1.2rem;
+      width: 1.55rem;
+      height: 1.55rem;
       background: white;
       border: .24rem solid var(--line-strong);
       border-radius: 50%;
@@ -1945,17 +1948,22 @@
 
     .roadmap-step strong {
       display: block;
-      margin-bottom: .16rem;
-      font-size: clamp(.62rem, .76vw, .9rem);
+      margin-bottom: .25rem;
+      font-size: clamp(.78rem, .96vw, 1.1rem);
     }
 
     .roadmap-step span {
       display: block;
-      max-width: 22ch;
+      max-width: 24ch;
       margin: 0 auto;
       color: var(--muted);
-      font-size: clamp(.5rem, .62vw, .72rem);
-      line-height: 1.3;
+      font-size: clamp(.62rem, .76vw, .88rem);
+      line-height: 1.35;
+    }
+
+    #slide-12 {
+      display: flex;
+      flex-direction: column;
     }
 
     .cta-grid {
@@ -2328,13 +2336,14 @@
       }
 
       .roadmap-row {
-        grid-template-columns: 6.5rem 1fr;
+        grid-template-columns: 7.5rem 1fr;
         gap: .55rem;
-        padding: .55rem .65rem;
+        min-height: 5.2rem;
+        padding: .65rem .75rem;
       }
 
       .roadmap-step {
-        padding-top: 1.9rem;
+        padding-top: 2.05rem;
       }
     }
 
