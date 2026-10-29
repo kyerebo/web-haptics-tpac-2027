@@ -1346,6 +1346,51 @@
       padding: .65rem .8rem;
     }
 
+    .event-trigger-layout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .syntax-card {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 15.5rem;
+      padding: 1.1rem;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+    }
+
+    .syntax-card.primary {
+      background: var(--accent-faint);
+      border-color: rgb(91 87 232 / 28%);
+    }
+
+    .syntax-card p {
+      margin-bottom: .8rem;
+      font-size: clamp(.64rem, .82vw, .95rem);
+    }
+
+    .syntax-card .code-card {
+      display: flex;
+      flex-direction: column;
+      align-self: end;
+      min-height: 8.7rem;
+      padding: .8rem .95rem;
+      box-shadow: none;
+    }
+
+    .syntax-card .code-card::before {
+      flex: 0 0 auto;
+      margin-bottom: .65rem;
+    }
+
+    .syntax-card .code-card pre {
+      margin: auto 0;
+    }
+
     .versus {
       align-self: center;
       color: var(--accent);
@@ -1801,6 +1846,118 @@
       font-size: clamp(.56rem, .72vw, .84rem);
     }
 
+    .roadmap {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1.1rem;
+    }
+
+    .roadmap-row {
+      display: grid;
+      grid-template-columns: 8rem 1fr;
+      gap: 1rem;
+      align-items: center;
+      padding: .9rem 1rem;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+    }
+
+    .roadmap-row.css-roadmap {
+      background: var(--accent-faint);
+      border-color: rgb(91 87 232 / 24%);
+    }
+
+    .roadmap-label strong {
+      display: block;
+      margin-bottom: .2rem;
+      font-size: clamp(.72rem, .9vw, 1.05rem);
+    }
+
+    .roadmap-label span {
+      color: var(--muted);
+      font-size: clamp(.54rem, .66vw, .76rem);
+    }
+
+    .roadmap-track {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .7rem;
+    }
+
+    .roadmap-track::before {
+      content: "";
+      position: absolute;
+      top: .72rem;
+      right: 15%;
+      left: 15%;
+      height: .13rem;
+      background: var(--line);
+    }
+
+    .roadmap-row.js-roadmap .roadmap-track::after,
+    .roadmap-row.css-roadmap .roadmap-track::after {
+      content: "";
+      position: absolute;
+      top: .72rem;
+      left: 15%;
+      height: .13rem;
+      background: var(--accent);
+    }
+
+    .roadmap-row.js-roadmap .roadmap-track::after {
+      width: 35%;
+    }
+
+    .roadmap-row.css-roadmap .roadmap-track::after {
+      width: 35%;
+    }
+
+    .roadmap-step {
+      position: relative;
+      z-index: 1;
+      padding-top: 2.15rem;
+      text-align: center;
+    }
+
+    .roadmap-step::before {
+      content: "";
+      position: absolute;
+      top: .2rem;
+      left: 50%;
+      width: 1.2rem;
+      height: 1.2rem;
+      background: white;
+      border: .24rem solid var(--line-strong);
+      border-radius: 50%;
+      transform: translateX(-50%);
+    }
+
+    .roadmap-step.done::before,
+    .roadmap-step.current::before {
+      border-color: var(--accent);
+    }
+
+    .roadmap-step.current::before {
+      box-shadow: 0 0 0 .35rem var(--accent-soft);
+    }
+
+    .roadmap-step strong {
+      display: block;
+      margin-bottom: .16rem;
+      font-size: clamp(.62rem, .76vw, .9rem);
+    }
+
+    .roadmap-step span {
+      display: block;
+      max-width: 22ch;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: clamp(.5rem, .62vw, .72rem);
+      line-height: 1.3;
+    }
+
     .cta-grid {
       display: grid;
       grid-template-columns: 1.08fr .92fr;
@@ -2080,6 +2237,24 @@
         line-height: 1.45;
       }
 
+      .syntax-card {
+        min-height: 11rem;
+        padding: .7rem;
+      }
+
+      .syntax-card p {
+        margin-bottom: .4rem;
+        font-size: clamp(.52rem, .76vw, .72rem);
+      }
+
+      .syntax-card .code-card {
+        padding: .55rem .7rem;
+      }
+
+      .syntax-card .code-card pre {
+        line-height: 1.4;
+      }
+
       #slide-5 .semantic-flow {
         margin-top: .7rem;
       }
@@ -2145,6 +2320,21 @@
 
       .status-step {
         padding-top: 2.5rem;
+      }
+
+      .roadmap {
+        gap: .5rem;
+        margin-top: .5rem;
+      }
+
+      .roadmap-row {
+        grid-template-columns: 6.5rem 1fr;
+        gap: .55rem;
+        padding: .55rem .65rem;
+      }
+
+      .roadmap-step {
+        padding-top: 1.9rem;
       }
     }
 
@@ -2485,26 +2675,26 @@
       <section class="slide" id="slide-8" data-title="CSS API" aria-roledescription="slide" aria-label="Slide 8 of 13: CSS API">
         <p class="eyebrow reveal">Declarative API</p>
         <h2 class="reveal delay-1">Common interaction feedback, without JavaScript in the critical path.</h2>
-        <p class="lede reveal delay-2">CSS makes routine feedback easy to author and gives the browser room to deliver it with low latency.</p>
-        <div class="css-choice reveal delay-3">
-          <article class="choice-card primary">
-            <span class="tag">Selector state</span>
-            <h3>Nested <code>@haptic</code></h3>
+        <p class="lede reveal delay-2">Map an interaction event directly to semantic haptic feedback.</p>
+        <div class="event-trigger-layout reveal delay-3">
+          <article class="syntax-card primary">
+            <span class="tag">Anonymous trigger</span>
+            <h3>Concise, one-off feedback</h3>
+            <p>Reference the event directly when only one declaration consumes it.</p>
             <div class="code-card">
-              <pre>.button:active {
-  scale: <span class="token-number">0.96</span>;
-  <span class="token-keyword">@haptic</span> align <span class="token-number">0.8</span>;
+              <pre>.button {
+  haptic: click align <span class="token-number">0.8</span>;
 }</pre>
             </div>
           </article>
-          <div class="versus">or</div>
-          <article class="choice-card">
-            <span class="tag">Event trigger</span>
-            <h3><code>haptic</code> property</h3>
+          <article class="syntax-card">
+            <span class="tag">Named trigger</span>
+            <h3>Reusable interaction intent</h3>
+            <p>Name a trigger when multiple effects or features share the same event source.</p>
             <div class="code-card">
               <pre>.button {
-  haptic:
-    click align <span class="token-number">0.8</span>;
+  event-trigger: --activate click;
+  haptic: --activate align <span class="token-number">0.8</span>;
 }</pre>
             </div>
           </article>
@@ -2542,8 +2732,8 @@
             <h2 class="reveal delay-1">Every snap gets a tactile punctuation mark.</h2>
             <p class="reveal delay-2">The carousel already exposes a snap interaction. Declarative haptics keeps the feedback alongside that behavior without JavaScript in the critical path.</p>
             <div class="code-card soft scenario-code reveal delay-3">
-              <pre>.photo:snapped {
-  <span class="token-keyword">@haptic</span> tick <span class="token-number">0.5</span>;
+              <pre>.carousel {
+  haptic: scrollsnapchanging tick <span class="token-number">0.5</span>;
 }</pre>
             </div>
             <button class="demo-button reveal delay-3" type="button" data-replay="carousel-stage" data-effect="tick" data-intensity="0.5">
@@ -2594,27 +2784,48 @@
 
       <section class="slide" id="slide-12" data-title="Project status" aria-roledescription="slide" aria-label="Slide 12 of 13: Project status">
         <p class="eyebrow reveal">Where we are</p>
-        <h2 class="reveal delay-1">One API is becoming real. One shape is being decided.</h2>
-        <div class="status-lanes reveal delay-2">
-          <div class="status-lane"><strong>JavaScript: shipping path</strong><span>Available for DevTrial in Edge on Windows and approaching an Origin Trial.</span></div>
-          <div class="status-lane"><strong>CSS: standards path</strong><span>The CSSWG is deciding between nested <code>@haptic</code> and event-trigger shapes.</span></div>
-        </div>
-        <div class="status-track reveal delay-3" aria-label="Web Haptics project status">
-          <div class="status-step done">
-            <span class="status-dot"></span>
-            <h3>Prototype</h3>
-            <p>Semantic effects reach native Windows haptics-capable input devices.</p>
-          </div>
-          <div class="status-step current">
-            <span class="status-dot"></span>
-            <h3>DevTrial</h3>
-            <p>Developers can enable and exercise <code>navigator.playHaptics()</code> today.</p>
-          </div>
-          <div class="status-step">
-            <span class="status-dot"></span>
-            <h3>Origin Trial</h3>
-            <p>Broader real-world feedback is the next milestone for the imperative API.</p>
-          </div>
+        <h2 class="reveal delay-1">Two API paths, moving forward in parallel.</h2>
+        <div class="roadmap reveal delay-2" aria-label="JavaScript and CSS Web Haptics timelines">
+          <section class="roadmap-row js-roadmap" aria-label="JavaScript API timeline">
+            <div class="roadmap-label">
+              <strong>JavaScript API</strong>
+              <span>Implementation path</span>
+            </div>
+            <div class="roadmap-track">
+              <div class="roadmap-step done">
+                <strong>Prototype</strong>
+                <span>Native semantic effects on Windows</span>
+              </div>
+              <div class="roadmap-step current">
+                <strong>DevTrial</strong>
+                <span>Available to exercise in Chromium/Edge today</span>
+              </div>
+              <div class="roadmap-step">
+                <strong>Origin Trial</strong>
+                <span>Broader real-world feedback next</span>
+              </div>
+            </div>
+          </section>
+          <section class="roadmap-row css-roadmap" aria-label="CSS API timeline">
+            <div class="roadmap-label">
+              <strong>CSS API</strong>
+              <span>Standards path</span>
+            </div>
+            <div class="roadmap-track">
+              <div class="roadmap-step done">
+                <strong>Model resolved</strong>
+                <span>CSSWG selected event-trigger</span>
+              </div>
+              <div class="roadmap-step current">
+                <strong>Editor's Draft</strong>
+                <span>Event-trigger specification pending</span>
+              </div>
+              <div class="roadmap-step">
+                <strong>Prototype</strong>
+                <span>Implementation follows the draft</span>
+              </div>
+            </div>
+          </section>
         </div>
         <span class="slide-number">12</span>
       </section>
